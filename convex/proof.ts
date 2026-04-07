@@ -33,21 +33,21 @@ export const createWithProof = action({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    // 1. Create Proof document
+    // 1. Create Proof document via hosted API
     const markdown = args.body || `# ${args.title}\n\n`;
-    const proofRes = await fetch(`${PROOF_BASE}/documents`, {
+    const proofRes = await fetch(`${PROOF_BASE}/share/markdown`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markdown, title: args.title }),
+      body: JSON.stringify({ markdown }),
     });
 
     if (!proofRes.ok) {
       throw new Error(`Proof API error: ${proofRes.status} ${await proofRes.text()}`);
     }
 
-    const proofData = await proofRes.json();
+    const proofData: { slug: string; accessToken: string } = await proofRes.json();
     const proof_slug = proofData.slug;
-    const proof_token = proofData.token;
+    const proof_token = proofData.accessToken;
 
     // 2. Create Convex record linked to Proof doc
     const docId: Id<"documents"> = await ctx.runMutation(internal.proof.insertDocument, {
@@ -71,7 +71,57 @@ export const createWithProof = action({
   },
 });
 
-// Internal mutation (called by the action above)
+// Link an existing Convex document to a new Proof doc
+export const linkExisting = action({
+  args: {
+    documentId: v.id("documents"),
+    body: v.optional(v.string()),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const markdown = args.body || `# ${args.title ?? "Untitled"}\n\n`;
+    const proofRes = await fetch(`${PROOF_BASE}/share/markdown`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markdown }),
+    });
+
+    if (!proofRes.ok) {
+      throw new Error(`Proof API error: ${proofRes.status}`);
+    }
+
+    const proofData: { slug: string; accessToken: string } =
+      await proofRes.json();
+
+    await ctx.runMutation(internal.proof.patchProofLink, {
+      documentId: args.documentId,
+      proof_slug: proofData.slug,
+      proof_token: proofData.accessToken,
+    });
+
+    return {
+      proof_slug: proofData.slug,
+      proof_url: `${PROOF_BASE}/d/${proofData.slug}?token=${proofData.accessToken}`,
+    };
+  },
+});
+
+// Internal: patch proof link onto existing document
+export const patchProofLink = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+    proof_slug: v.string(),
+    proof_token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.documentId, {
+      proof_slug: args.proof_slug,
+      proof_token: args.proof_token,
+    });
+  },
+});
+
+// Internal mutation (called by createWithProof)
 export const insertDocument = internalMutation({
   args: {
     title: v.string(),
