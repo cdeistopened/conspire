@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAction, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { KanbanBoard } from "./components/KanbanBoard";
 import { NewPostModal } from "./components/NewPostModal";
@@ -9,28 +9,22 @@ import type { Doc } from "../convex/_generated/dataModel";
 export function App() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Doc<"documents"> | null>(null);
-  const [creating, setCreating] = useState(false);
   const documents = useQuery(api.documents.listByStatus, {});
-  const createWithProof = useAction(api.proof.createWithProof);
+  const createDocument = useMutation(api.documents.create);
 
   const handleCreate = async (data: {
     title: string;
     platform: "x" | "linkedin" | "instagram" | "facebook" | "tiktok";
     body?: string;
   }) => {
-    setCreating(true);
-    try {
-      await createWithProof({
-        title: data.title,
-        doc_type: "social_post",
-        platform: data.platform,
-        author: "Charlie",
-        body: data.body,
-      });
-      setShowNewPost(false);
-    } finally {
-      setCreating(false);
-    }
+    await createDocument({
+      title: data.title,
+      doc_type: "social_post",
+      platform: data.platform,
+      author: "Charlie",
+      body: data.body,
+    });
+    setShowNewPost(false);
   };
 
   const handleCardClick = (doc: Doc<"documents">) => {
@@ -46,12 +40,21 @@ export function App() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <h1 className="logo">conspire</h1>
-          <span className="tagline">breathe together</span>
+          <button className="header-nav-hint" aria-label="Navigation">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M3 5h12M3 9h12M3 13h12" />
+            </svg>
+          </button>
+          <div className="header-brand">
+            <h1 className="logo">conspire</h1>
+            <span className="tagline">breathe together</span>
+          </div>
         </div>
-        <button className="btn-primary" onClick={() => setShowNewPost(true)}>
-          + New Post
-        </button>
+        <div className="header-actions">
+          <button className="btn-primary" onClick={() => setShowNewPost(true)}>
+            + New Post
+          </button>
+        </div>
       </header>
 
       <main className="main">
@@ -65,7 +68,6 @@ export function App() {
         <NewPostModal
           onClose={() => setShowNewPost(false)}
           onCreate={handleCreate}
-          creating={creating}
         />
       )}
 

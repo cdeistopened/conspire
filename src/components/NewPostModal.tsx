@@ -7,18 +7,17 @@ interface Props {
     platform: "x" | "linkedin" | "instagram" | "facebook" | "tiktok";
     body?: string;
   }) => void;
-  creating?: boolean;
 }
 
 const PLATFORMS = [
-  { value: "x" as const, label: "𝕏 Twitter" },
-  { value: "linkedin" as const, label: "LinkedIn" },
-  { value: "instagram" as const, label: "Instagram" },
-  { value: "facebook" as const, label: "Facebook" },
-  { value: "tiktok" as const, label: "TikTok" },
+  { value: "x" as const, label: "X", color: "#1E1E1E" },
+  { value: "linkedin" as const, label: "LinkedIn", color: "#0A66C2" },
+  { value: "instagram" as const, label: "Instagram", color: "#E1306C" },
+  { value: "facebook" as const, label: "Facebook", color: "#1877F2" },
+  { value: "tiktok" as const, label: "TikTok", color: "#010101" },
 ];
 
-export function NewPostModal({ onClose, onCreate, creating }: Props) {
+export function NewPostModal({ onClose, onCreate }: Props) {
   const [title, setTitle] = useState("");
   const [platform, setPlatform] = useState<
     "x" | "linkedin" | "instagram" | "facebook" | "tiktok"
@@ -31,8 +30,13 @@ export function NewPostModal({ onClose, onCreate, creating }: Props) {
     onCreate({ title: title.trim(), platform, body: body.trim() || undefined });
   };
 
+  // Close on Escape
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} onKeyDown={handleKeyDown}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>New Post</h2>
@@ -53,27 +57,20 @@ export function NewPostModal({ onClose, onCreate, creating }: Props) {
             />
           </div>
           <div className="form-field">
-            <label htmlFor="platform">Platform</label>
-            <select
-              id="platform"
-              value={platform}
-              onChange={(e) =>
-                setPlatform(
-                  e.target.value as
-                    | "x"
-                    | "linkedin"
-                    | "instagram"
-                    | "facebook"
-                    | "tiktok"
-                )
-              }
-            >
+            <label>Platform</label>
+            <div className="platform-selector">
               {PLATFORMS.map((p) => (
-                <option key={p.value} value={p.value}>
+                <button
+                  key={p.value}
+                  type="button"
+                  className={`platform-option ${platform === p.value ? "selected" : ""}`}
+                  onClick={() => setPlatform(p.value)}
+                >
+                  <span className="platform-dot" style={{ backgroundColor: p.color }} />
                   {p.label}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
           <div className="form-field">
             <label htmlFor="body">Draft (optional)</label>
@@ -81,7 +78,7 @@ export function NewPostModal({ onClose, onCreate, creating }: Props) {
               id="body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Start writing or leave blank to draft in Proof..."
+              placeholder="Start writing or leave blank to draft in the editor..."
               rows={4}
             />
           </div>
@@ -89,8 +86,8 @@ export function NewPostModal({ onClose, onCreate, creating }: Props) {
             <button type="button" className="btn-ghost" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={!title.trim() || creating}>
-              {creating ? "Creating..." : "Create"}
+            <button type="submit" className="btn-primary" disabled={!title.trim()}>
+              Create Post
             </button>
           </div>
         </form>

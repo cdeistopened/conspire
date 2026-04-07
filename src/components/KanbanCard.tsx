@@ -1,15 +1,27 @@
 import type { Doc } from "../../convex/_generated/dataModel";
 
-const PLATFORM_ICONS: Record<string, string> = {
-  x: "𝕏",
-  linkedin: "in",
-  instagram: "📷",
-  facebook: "f",
-  tiktok: "♪",
-  substack: "✉",
-  webflow: "◆",
-  beehiiv: "🐝",
+const PLATFORM_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
+  x: { icon: "𝕏", color: "#1E1E1E", label: "X" },
+  linkedin: { icon: "in", color: "#0A66C2", label: "LinkedIn" },
+  instagram: { icon: "IG", color: "#E1306C", label: "Instagram" },
+  facebook: { icon: "f", color: "#1877F2", label: "Facebook" },
+  tiktok: { icon: "TT", color: "#010101", label: "TikTok" },
+  substack: { icon: "S", color: "#FF6719", label: "Substack" },
+  webflow: { icon: "W", color: "#4353FF", label: "Webflow" },
+  beehiiv: { icon: "B", color: "#D4A200", label: "Beehiiv" },
 };
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 interface Props {
   document: Doc<"documents">;
@@ -27,14 +39,14 @@ export function KanbanCard({ document, onClick }: Props) {
     (e.target as HTMLElement).classList.remove("card-dragging");
   };
 
-  const platformIcon = document.platform
-    ? PLATFORM_ICONS[document.platform] ?? ""
-    : "";
+  const platform = document.platform ? PLATFORM_CONFIG[document.platform] : null;
 
   const preview =
-    document.body && document.body.length > 120
-      ? document.body.slice(0, 120) + "..."
+    document.body && document.body.length > 100
+      ? document.body.slice(0, 100) + "..."
       : document.body;
+
+  const accentColor = platform?.color ?? "#D4CEC4";
 
   return (
     <div
@@ -43,17 +55,27 @@ export function KanbanCard({ document, onClick }: Props) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={onClick}
+      style={{ "--card-accent": accentColor } as React.CSSProperties}
     >
       <div className="card-top">
-        {platformIcon && <span className="card-platform">{platformIcon}</span>}
+        {platform && (
+          <span
+            className="card-platform-badge"
+            style={{ backgroundColor: platform.color }}
+            title={platform.label}
+          >
+            {platform.icon}
+          </span>
+        )}
         <span className="card-title">{document.title}</span>
       </div>
       {preview && <p className="card-preview">{preview}</p>}
       <div className="card-meta">
         <span className="card-author">{document.author}</span>
+        <span className="card-time">{timeAgo(document._creationTime)}</span>
         {document.scheduled_date && (
           <span className="card-date">
-            {new Date(document.scheduled_date).toLocaleDateString()}
+            {new Date(document.scheduled_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
           </span>
         )}
         {document.tags && document.tags.length > 0 && (

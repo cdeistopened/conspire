@@ -90,14 +90,6 @@ export const updateStatus = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { status: args.status });
-
-    await ctx.db.insert("activity", {
-      document: args.id,
-      actor: args.actor,
-      action: "status_changed",
-      details: `Status changed to ${args.status}`,
-      timestamp: Date.now(),
-    });
   },
 });
 
