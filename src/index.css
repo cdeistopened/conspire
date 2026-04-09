@@ -1015,6 +1015,83 @@ body {
   transition: all var(--duration-fast) var(--ease-out);
 }
 
+.control-group-col {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.platform-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.platform-check {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.platform-check-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: white;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.platform-check-btn:hover {
+  border-color: var(--gray-300);
+  color: var(--charcoal);
+}
+
+.platform-check.checked .platform-check-btn {
+  border-color: var(--gold);
+  background: var(--gold-subtle);
+  color: var(--charcoal);
+  font-weight: 600;
+}
+
+.check-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  flex-shrink: 0;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.check-label {
+  line-height: 1;
+}
+
+.platform-post-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  color: var(--gold);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--ease-out);
+  margin-left: -2px;
+}
+
+.platform-post-btn:hover {
+  background: var(--gold-subtle);
+  color: var(--charcoal);
+}
+
 .date-input {
   padding: 5px var(--space-sm);
   font-family: var(--font-mono);

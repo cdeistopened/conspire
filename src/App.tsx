@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { KanbanBoard } from "./components/KanbanBoard";
 import { NewPostModal } from "./components/NewPostModal";
 import { DocumentPanel } from "./components/DocumentPanel";
-import type { Doc } from "../convex/_generated/dataModel";
+import type { Doc, Id } from "../convex/_generated/dataModel";
 
 type ViewFilter = "all" | "social" | "video" | "podcast" | "blog" | "newsletter";
 
@@ -22,8 +22,20 @@ export function App() {
   const [selectedDoc, setSelectedDoc] = useState<Doc<"documents"> | null>(null);
   const [showNav, setShowNav] = useState(false);
   const [activeView, setActiveView] = useState<ViewFilter>("all");
+  const [pendingOpenId, setPendingOpenId] = useState<Id<"documents"> | null>(null);
   const documents = useQuery(api.documents.listByStatus, {});
   const createDocument = useMutation(api.documents.create);
+
+  // Auto-open newly created doc once Convex delivers it
+  useEffect(() => {
+    if (pendingOpenId && documents) {
+      const found = documents.find((d) => d._id === pendingOpenId);
+      if (found) {
+        setSelectedDoc(found);
+        setPendingOpenId(null);
+      }
+    }
+  }, [pendingOpenId, documents]);
 
   const filteredDocuments = documents?.filter((d) => {
     if (activeView === "all") return true;
@@ -43,17 +55,7 @@ export function App() {
       body: data.body,
     });
     setShowNewPost(false);
-    // Auto-open the new card
-    const newDoc = documents?.find((d) => d._id === docId);
-    if (newDoc) {
-      setSelectedDoc(newDoc);
-    } else {
-      // Convex is reactive — the doc will appear on next render, grab it then
-      setTimeout(() => {
-        const found = documents?.find((d) => d._id === docId);
-        if (found) setSelectedDoc(found);
-      }, 500);
-    }
+    setPendingOpenId(docId);
   };
 
   const handleCardClick = (doc: Doc<"documents">) => {
@@ -83,7 +85,7 @@ export function App() {
         </div>
         <div className="header-actions">
           <button className="btn-primary" onClick={() => setShowNewPost(true)}>
-            + New Post
+            + New
           </button>
         </div>
       </header>

@@ -258,23 +258,56 @@ export function DocumentPanel({ document, onClose }: Props) {
               <option value="note">Note</option>
             </select>
           </div>
-          <div className="control-group">
-            <label>Platform</label>
-            <select
-              value={document.platform ?? ""}
-              onChange={(e) =>
-                handlePlatformChange(
-                  e.target.value as Doc<"documents">["platform"]
-                )
-              }
-            >
-              <option value="">None</option>
-              {Object.entries(PLATFORM_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+          <div className="control-group control-group-col">
+            <label>Platforms</label>
+            <div className="platform-checkboxes">
+              {Object.entries(PLATFORM_CONFIG).map(([key, cfg]) => {
+                const isActive = document.tags?.includes(`platform:${key}`) || document.platform === key;
+                const postUrl = cfg.postUrl;
+                return (
+                  <div key={key} className={`platform-check ${isActive ? "checked" : ""}`}>
+                    <button
+                      className="platform-check-btn"
+                      onClick={async () => {
+                        const currentTags = document.tags ?? [];
+                        const tag = `platform:${key}`;
+                        if (isActive) {
+                          await updateDoc({
+                            id: document._id,
+                            tags: currentTags.filter((t) => t !== tag),
+                            ...(document.platform === key ? { platform: undefined } : {}),
+                          } as any);
+                        } else {
+                          await updateDoc({
+                            id: document._id,
+                            tags: [...currentTags.filter((t) => !t.startsWith("platform:") || currentTags.includes(t)), tag],
+                            platform: document.platform || key,
+                          } as any);
+                        }
+                      }}
+                    >
+                      <span className="check-dot" style={isActive ? { backgroundColor: cfg.postUrl ? "#4A9B6E" : "#C8943E" } : undefined} />
+                      <span className="check-label">{cfg.label}</span>
+                    </button>
+                    {isActive && postUrl && (
+                      <a
+                        className="platform-post-btn"
+                        href={
+                          key === "x"
+                            ? `${postUrl}${encodeURIComponent(bodyDraft)}`
+                            : postUrl
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Open ${cfg.label}`}
+                      >
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <div className="control-group">
             <label>Publish</label>
