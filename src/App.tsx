@@ -34,17 +34,26 @@ export function App() {
   const handleCreate = async (data: {
     title: string;
     doc_type: string;
-    platform?: string;
     body?: string;
   }) => {
-    await createDocument({
+    const docId = await createDocument({
       title: data.title,
       doc_type: data.doc_type as any,
-      platform: data.platform as any,
       author: "Charlie",
       body: data.body,
     });
     setShowNewPost(false);
+    // Auto-open the new card
+    const newDoc = documents?.find((d) => d._id === docId);
+    if (newDoc) {
+      setSelectedDoc(newDoc);
+    } else {
+      // Convex is reactive — the doc will appear on next render, grab it then
+      setTimeout(() => {
+        const found = documents?.find((d) => d._id === docId);
+        if (found) setSelectedDoc(found);
+      }, 500);
+    }
   };
 
   const handleCardClick = (doc: Doc<"documents">) => {

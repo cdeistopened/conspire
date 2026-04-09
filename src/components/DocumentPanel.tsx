@@ -40,6 +40,7 @@ export function DocumentPanel({ document, onClose }: Props) {
   const linkToProof = useAction(api.proof.linkExisting);
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const saveThumbnail = useMutation(api.documents.saveThumbnail);
+  const removeDoc = useMutation(api.documents.remove);
   const activity = useQuery(api.activity.listByDocument, {
     document: document._id,
   });
@@ -200,6 +201,20 @@ export function DocumentPanel({ document, onClose }: Props) {
                 </svg>
               )}
             </button>
+            <button
+              className="btn-ghost panel-delete"
+              onClick={async () => {
+                if (confirm("Delete this permanently?")) {
+                  await removeDoc({ id: document._id });
+                  onClose();
+                }
+              }}
+              title="Delete"
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4M12.67 4v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4" />
+              </svg>
+            </button>
             <button className="btn-ghost panel-close" onClick={onClose}>
               &times;
             </button>
@@ -228,6 +243,22 @@ export function DocumentPanel({ document, onClose }: Props) {
             </div>
           </div>
           <div className="control-group">
+            <label>Type</label>
+            <select
+              value={document.doc_type}
+              onChange={async (e) => {
+                await updateDoc({ id: document._id, doc_type: e.target.value } as any);
+              }}
+            >
+              <option value="social_post">Social Post</option>
+              <option value="short_form_video">Short-Form Video</option>
+              <option value="podcast">Podcast / YouTube</option>
+              <option value="blog_draft">Blog / SEO</option>
+              <option value="newsletter">Newsletter</option>
+              <option value="note">Note</option>
+            </select>
+          </div>
+          <div className="control-group">
             <label>Platform</label>
             <select
               value={document.platform ?? ""}
@@ -237,6 +268,7 @@ export function DocumentPanel({ document, onClose }: Props) {
                 )
               }
             >
+              <option value="">None</option>
               {Object.entries(PLATFORM_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
