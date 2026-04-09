@@ -31,13 +31,14 @@ export function App() {
 
   const handleCreate = async (data: {
     title: string;
-    platform: "x" | "linkedin" | "instagram" | "facebook" | "tiktok";
+    platform: string;
+    doc_type: string;
     body?: string;
   }) => {
     await createDocument({
       title: data.title,
-      doc_type: "social_post",
-      platform: data.platform,
+      doc_type: data.doc_type as any,
+      platform: data.platform as any,
       author: "Charlie",
       body: data.body,
     });
