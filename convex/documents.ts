@@ -57,6 +57,8 @@ export const create = mutation({
     body: v.optional(v.string()),
     source: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    thumbnail_url: v.optional(v.string()),
+    meta_description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const docId = await ctx.db.insert("documents", {
@@ -112,6 +114,11 @@ export const update = mutation({
     ),
     scheduled_date: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),
+    proof_slug: v.optional(v.string()),
+    proof_token: v.optional(v.string()),
+    source: v.optional(v.string()),
+    thumbnail_url: v.optional(v.string()),
+    meta_description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -124,6 +131,21 @@ export const update = mutation({
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(id, updates);
     }
+  },
+});
+
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
+});
+
+export const saveThumbnail = mutation({
+  args: {
+    id: v.id("documents"),
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const url = await ctx.storage.getUrl(args.storageId);
+    await ctx.db.patch(args.id, { thumbnail_url: url ?? undefined });
   },
 });
 

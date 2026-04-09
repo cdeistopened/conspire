@@ -37,6 +37,8 @@ export function DocumentPanel({ document, onClose }: Props) {
   const updateStatus = useMutation(api.documents.updateStatus);
   const updateDoc = useMutation(api.documents.update);
   const linkToProof = useAction(api.proof.linkExisting);
+  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const saveThumbnail = useMutation(api.documents.saveThumbnail);
   const activity = useQuery(api.activity.listByDocument, {
     document: document._id,
   });
@@ -238,33 +240,38 @@ export function DocumentPanel({ document, onClose }: Props) {
 
         {/* Properties */}
         <div className="panel-properties">
-          {document.thumbnail_url && (
-            <div className="prop-thumbnail">
+          <div
+            className={`prop-dropzone ${document.thumbnail_url ? "has-image" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }}
+            onDragLeave={(e) => { e.currentTarget.classList.remove("drag-over"); }}
+            onDrop={async (e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove("drag-over");
+              const file = e.dataTransfer.files[0];
+              if (!file || !file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+              const uploadUrl = await generateUploadUrl();
+              const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+              const { storageId } = await res.json();
+              await saveThumbnail({ id: document._id, storageId });
+            }}
+          >
+            {document.thumbnail_url ? (
               <img src={document.thumbnail_url} alt="" />
-            </div>
-          )}
-          <div className="prop-field">
-            <label>Thumbnail URL</label>
-            <input
-              type="text"
-              className="prop-input"
-              placeholder="https://..."
-              defaultValue={document.thumbnail_url ?? ""}
-              onBlur={async (e) => {
-                const val = e.target.value.trim();
-                if (val !== (document.thumbnail_url ?? "")) {
-                  await updateDoc({ id: document._id, thumbnail_url: val || undefined } as any);
-                }
-              }}
-            />
+            ) : (
+              <div className="dropzone-placeholder">
+                {document.platform === "instagram" || document.platform === "tiktok"
+                  ? "Drop image or video"
+                  : "Drop thumbnail image"}
+              </div>
+            )}
           </div>
           <div className="prop-field">
-            <label>Meta Description</label>
-            <input
-              type="text"
-              className="prop-input"
-              placeholder="155 chars for search results..."
+            <label>Description</label>
+            <textarea
+              className="prop-textarea"
+              placeholder={document.platform === "webflow" ? "Meta description for SEO (aim for 155 chars)..." : "Post description..."}
               defaultValue={document.meta_description ?? ""}
+              rows={2}
               onBlur={async (e) => {
                 const val = e.target.value.trim();
                 if (val !== (document.meta_description ?? "")) {
@@ -272,7 +279,7 @@ export function DocumentPanel({ document, onClose }: Props) {
                 }
               }}
             />
-            {document.meta_description && (
+            {document.meta_description && document.platform === "webflow" && (
               <span className={`prop-char-count ${document.meta_description.length > 155 ? "over" : ""}`}>
                 {document.meta_description.length}/155
               </span>

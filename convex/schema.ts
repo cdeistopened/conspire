@@ -39,6 +39,8 @@ export default defineSchema({
     campaign: v.optional(v.id("campaigns")),
     source: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    thumbnail_url: v.optional(v.string()),
+    meta_description: v.optional(v.string()),
     external_id: v.optional(v.string()),
     external_url: v.optional(v.string()),
     media: v.optional(v.array(v.id("_storage"))),

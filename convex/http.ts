@@ -106,6 +106,11 @@ http.route({
       platform: body.platform,
       scheduled_date: body.scheduled_date,
       tags: body.tags,
+      proof_slug: body.proof_slug,
+      proof_token: body.proof_token,
+      source: body.source,
+      thumbnail_url: body.thumbnail_url,
+      meta_description: body.meta_description,
     });
 
     if (body.status) {
