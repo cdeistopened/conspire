@@ -69,6 +69,11 @@ export function KanbanCard({ document, onClick }: Props) {
         )}
         <span className="card-title">{document.title}</span>
       </div>
+      {document.thumbnail_url && (
+        <div className="card-thumbnail">
+          <img src={document.thumbnail_url} alt="" />
+        </div>
+      )}
       {preview && <p className="card-preview">{preview}</p>}
       <div className="card-meta">
         <span className="card-author">{document.author}</span>

@@ -236,6 +236,50 @@ export function DocumentPanel({ document, onClose }: Props) {
           </div>
         </div>
 
+        {/* Properties */}
+        <div className="panel-properties">
+          {document.thumbnail_url && (
+            <div className="prop-thumbnail">
+              <img src={document.thumbnail_url} alt="" />
+            </div>
+          )}
+          <div className="prop-field">
+            <label>Thumbnail URL</label>
+            <input
+              type="text"
+              className="prop-input"
+              placeholder="https://..."
+              defaultValue={document.thumbnail_url ?? ""}
+              onBlur={async (e) => {
+                const val = e.target.value.trim();
+                if (val !== (document.thumbnail_url ?? "")) {
+                  await updateDoc({ id: document._id, thumbnail_url: val || undefined } as any);
+                }
+              }}
+            />
+          </div>
+          <div className="prop-field">
+            <label>Meta Description</label>
+            <input
+              type="text"
+              className="prop-input"
+              placeholder="155 chars for search results..."
+              defaultValue={document.meta_description ?? ""}
+              onBlur={async (e) => {
+                const val = e.target.value.trim();
+                if (val !== (document.meta_description ?? "")) {
+                  await updateDoc({ id: document._id, meta_description: val || undefined } as any);
+                }
+              }}
+            />
+            {document.meta_description && (
+              <span className={`prop-char-count ${document.meta_description.length > 155 ? "over" : ""}`}>
+                {document.meta_description.length}/155
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Action bar */}
         <div className="panel-actions">
           <button

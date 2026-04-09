@@ -366,6 +366,21 @@ body {
   overflow: hidden;
 }
 
+/* Card thumbnail */
+.card-thumbnail {
+  margin: 0 calc(-1 * var(--space-md)) var(--space-sm);
+  margin-top: calc(-1 * var(--space-xs));
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.card-thumbnail img {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  display: block;
+}
+
 .card-meta {
   display: flex;
   align-items: center;
@@ -828,6 +843,12 @@ body {
   width: 100%;
 }
 
+.panel-full .panel-properties {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* Controls */
 .panel-controls {
   padding: var(--space-md) var(--space-xl);
@@ -908,6 +929,82 @@ body {
   border-color: var(--gold);
   color: white;
   box-shadow: 0 2px 6px rgba(200, 148, 62, 0.3);
+}
+
+/* Properties section */
+.panel-properties {
+  padding: var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+  background: rgba(245, 241, 234, 0.25);
+}
+
+.prop-thumbnail {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-height: 160px;
+}
+
+.prop-thumbnail img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.prop-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  position: relative;
+}
+
+.prop-field label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--gray-300);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.prop-input {
+  width: 100%;
+  padding: 6px var(--space-sm);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--charcoal);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.prop-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.prop-input::placeholder {
+  color: var(--gray-300);
+}
+
+.prop-char-count {
+  position: absolute;
+  right: var(--space-sm);
+  bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--gray-300);
+}
+
+.prop-char-count.over {
+  color: var(--red);
+  font-weight: 600;
 }
 
 /* Action bar */
