@@ -13,16 +13,20 @@ const STATUS_OPTIONS = [
   { value: "posted" as const, label: "Posted", color: "#1E1E1E" },
 ];
 
-const PLATFORM_LABELS: Record<string, string> = {
-  x: "𝕏 Twitter",
-  linkedin: "LinkedIn",
-  instagram: "Instagram",
-  facebook: "Facebook",
-  tiktok: "TikTok",
-  substack: "Substack",
-  webflow: "Webflow",
-  beehiiv: "Beehiiv",
+const PLATFORM_CONFIG: Record<string, { label: string; charLimit: number; postUrl?: string }> = {
+  x: { label: "𝕏 Twitter", charLimit: 280, postUrl: "https://twitter.com/intent/tweet?text=" },
+  linkedin: { label: "LinkedIn", charLimit: 3000, postUrl: "https://www.linkedin.com/feed/?shareActive=true" },
+  instagram: { label: "Instagram", charLimit: 2200 },
+  facebook: { label: "Facebook", charLimit: 63206, postUrl: "https://www.facebook.com/" },
+  tiktok: { label: "TikTok", charLimit: 2200 },
+  substack: { label: "Substack", charLimit: 0 },
+  webflow: { label: "Webflow", charLimit: 0 },
+  beehiiv: { label: "Beehiiv", charLimit: 0 },
 };
+
+const PLATFORM_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(PLATFORM_CONFIG).map(([k, v]) => [k, v.label])
+);
 
 interface Props {
   document: Doc<"documents">;
@@ -43,6 +47,7 @@ export function DocumentPanel({ document, onClose }: Props) {
   const [linking, setLinking] = useState(false);
   const [tab, setTab] = useState<"quick" | "proof">(document.proof_slug ? "proof" : "quick");
   const [saved, setSaved] = useState(true);
+  const [copied, setCopied] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const titleInput = useRef<HTMLInputElement>(null);
 
@@ -215,6 +220,49 @@ export function DocumentPanel({ document, onClose }: Props) {
           </div>
         </div>
 
+        {/* Action bar */}
+        <div className="panel-actions">
+          <button
+            className="btn-action"
+            onClick={async () => {
+              await navigator.clipboard.writeText(bodyDraft);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            title="Copy post text to clipboard"
+          >
+            {copied ? "Copied!" : "Copy text"}
+          </button>
+          {document.platform && PLATFORM_CONFIG[document.platform]?.postUrl && (
+            <a
+              className="btn-action"
+              href={
+                document.platform === "x"
+                  ? `${PLATFORM_CONFIG[document.platform].postUrl}${encodeURIComponent(bodyDraft)}`
+                  : PLATFORM_CONFIG[document.platform].postUrl
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Open in ${PLATFORM_CONFIG[document.platform]?.label} to post manually`}
+            >
+              Post in {PLATFORM_CONFIG[document.platform]?.label} ↗
+            </a>
+          )}
+          {document.platform && PLATFORM_CONFIG[document.platform]?.charLimit > 0 && (
+            <span
+              className={`char-counter ${
+                bodyDraft.length > PLATFORM_CONFIG[document.platform].charLimit
+                  ? "over"
+                  : bodyDraft.length > PLATFORM_CONFIG[document.platform].charLimit * 0.9
+                    ? "warn"
+                    : ""
+              }`}
+            >
+              {bodyDraft.length} / {PLATFORM_CONFIG[document.platform].charLimit}
+            </span>
+          )}
+        </div>
+
         {/* Editor tabs */}
         <div className="panel-tabs">
           <button
@@ -276,6 +324,27 @@ export function DocumentPanel({ document, onClose }: Props) {
             />
           )}
         </div>
+
+        {/* Mention/tag notes */}
+        {document.doc_type === "social_post" && (
+          <div className="panel-mentions">
+            <label>Tag / Mention Notes</label>
+            <input
+              type="text"
+              className="mentions-input"
+              placeholder="@handles to tag when posting manually..."
+              defaultValue={document.tags?.filter(t => t.startsWith("@")).join(", ") ?? ""}
+              onBlur={async (e) => {
+                const mentions = e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                const existingTags = (document.tags ?? []).filter(t => !t.startsWith("@"));
+                await updateDoc({ id: document._id, tags: [...existingTags, ...mentions] });
+              }}
+            />
+          </div>
+        )}
 
         {/* Activity (only show meaningful events) */}
         {activity && activity.length > 0 && (

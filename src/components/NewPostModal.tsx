@@ -26,8 +26,8 @@ export function NewPostModal({ onClose, onCreate }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onCreate({ title: title.trim(), platform, body: body.trim() || undefined });
+    const finalTitle = title.trim() || (body.trim() ? body.trim().slice(0, 60).replace(/\n/g, " ") + (body.trim().length > 60 ? "..." : "") : "Untitled post");
+    onCreate({ title: finalTitle, platform, body: body.trim() || undefined });
   };
 
   // Close on Escape
@@ -52,7 +52,7 @@ export function NewPostModal({ onClose, onCreate }: Props) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What's this post about?"
+              placeholder="Title (optional — auto-generates from body)"
               autoFocus
             />
           </div>
@@ -86,7 +86,7 @@ export function NewPostModal({ onClose, onCreate }: Props) {
             <button type="button" className="btn-ghost" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={!title.trim()}>
+            <button type="submit" className="btn-primary" disabled={!title.trim() && !body.trim()}>
               Create Post
             </button>
           </div>
