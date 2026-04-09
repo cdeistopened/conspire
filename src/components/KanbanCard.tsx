@@ -1,3 +1,5 @@
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 
 const PLATFORM_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
@@ -29,6 +31,9 @@ interface Props {
 }
 
 export function KanbanCard({ document, onClick }: Props) {
+  const children = useQuery(api.documents.listByParent, { parent_id: document._id });
+  const childCount = children?.length ?? 0;
+
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("text/plain", document._id);
     e.dataTransfer.effectAllowed = "move";
@@ -76,6 +81,14 @@ export function KanbanCard({ document, onClick }: Props) {
       )}
       {preview && <p className="card-preview">{preview}</p>}
       <div className="card-meta">
+        {childCount > 0 && (
+          <span className="card-children-badge" title={`${childCount} linked item${childCount > 1 ? "s" : ""}`}>
+            {childCount} spoke{childCount > 1 ? "s" : ""}
+          </span>
+        )}
+        {document.parent_id && (
+          <span className="card-child-indicator" title="Linked to parent">↩</span>
+        )}
         <span className="card-author">{document.author}</span>
         <span className="card-time">{timeAgo(document._creationTime)}</span>
         {document.scheduled_date && (

@@ -42,6 +42,13 @@ export function DocumentPanel({ document, onClose }: Props) {
   const activity = useQuery(api.activity.listByDocument, {
     document: document._id,
   });
+  const children = useQuery(api.documents.listByParent, {
+    parent_id: document._id,
+  });
+  const allDocs = useQuery(api.documents.listByStatus, {});
+  const parentDoc = document.parent_id
+    ? allDocs?.find((d) => d._id === document.parent_id)
+    : null;
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(document.title);
@@ -412,6 +419,50 @@ export function DocumentPanel({ document, onClose }: Props) {
             />
           </div>
         )}
+
+        {/* Parent / Children links */}
+        <div className="panel-links">
+          <div className="links-row">
+            <label>Parent</label>
+            {parentDoc ? (
+              <span className="link-chip" onClick={() => onClose()}>
+                {parentDoc.title}
+              </span>
+            ) : (
+              <select
+                className="link-select"
+                value=""
+                onChange={async (e) => {
+                  if (e.target.value) {
+                    await updateDoc({ id: document._id, parent_id: e.target.value as any });
+                  }
+                }}
+              >
+                <option value="">Link to parent...</option>
+                {allDocs
+                  ?.filter((d) => d._id !== document._id && !d.parent_id)
+                  .map((d) => (
+                    <option key={d._id} value={d._id}>
+                      {d.title}
+                    </option>
+                  ))}
+              </select>
+            )}
+          </div>
+          {children && children.length > 0 && (
+            <div className="links-children">
+              <label>Spokes ({children.length})</label>
+              <div className="children-list">
+                {children.map((c) => (
+                  <span key={c._id} className="link-chip child-chip">
+                    {c.platform && <span className="chip-dot" style={{ background: `var(--platform-${c.platform})` }} />}
+                    {c.title}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Activity (only show meaningful events) */}
         {activity && activity.length > 0 && (

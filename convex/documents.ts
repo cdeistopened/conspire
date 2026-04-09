@@ -25,6 +25,16 @@ export const listByStatus = query({
   },
 });
 
+export const listByParent = query({
+  args: { parent_id: v.id("documents") },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query("documents")
+      .withIndex("by_parent", (q) => q.eq("parent_id", args.parent_id))
+      .collect();
+  },
+});
+
 export const get = query({
   args: { id: v.id("documents") },
   handler: async (ctx, args) => {
@@ -59,6 +69,7 @@ export const create = mutation({
     tags: v.optional(v.array(v.string())),
     thumbnail_url: v.optional(v.string()),
     meta_description: v.optional(v.string()),
+    parent_id: v.optional(v.id("documents")),
   },
   handler: async (ctx, args) => {
     const docId = await ctx.db.insert("documents", {
@@ -119,6 +130,7 @@ export const update = mutation({
     source: v.optional(v.string()),
     thumbnail_url: v.optional(v.string()),
     meta_description: v.optional(v.string()),
+    parent_id: v.optional(v.id("documents")),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

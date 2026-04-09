@@ -448,6 +448,22 @@ body {
   overflow: hidden;
 }
 
+/* Card badges */
+.card-children-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--gold-subtle);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.card-child-indicator {
+  font-size: 0.7rem;
+  color: var(--gray-300);
+}
+
 /* Card thumbnail */
 .card-thumbnail {
   margin: 0 calc(-1 * var(--space-md)) var(--space-sm);
@@ -1112,6 +1128,87 @@ body {
 .prop-char-count.over {
   color: var(--red);
   font-weight: 600;
+}
+
+/* Parent/Children links */
+.panel-links {
+  padding: var(--space-sm) var(--space-xl);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.links-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.links-row label, .links-children label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--gray-300);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 50px;
+}
+
+.link-select {
+  flex: 1;
+  padding: 4px var(--space-sm);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  border: 1px dashed var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+}
+
+.link-select:focus {
+  outline: none;
+  border-color: var(--gold);
+  border-style: solid;
+}
+
+.link-chip {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  color: var(--charcoal);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.link-chip:hover {
+  background: var(--gold-subtle);
+}
+
+.children-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-xs);
+}
+
+.child-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+}
+
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* Action bar */

@@ -41,6 +41,7 @@ export default defineSchema({
     tags: v.optional(v.array(v.string())),
     thumbnail_url: v.optional(v.string()),
     meta_description: v.optional(v.string()),
+    parent_id: v.optional(v.id("documents")),
     external_id: v.optional(v.string()),
     external_url: v.optional(v.string()),
     media: v.optional(v.array(v.id("_storage"))),
@@ -58,7 +59,8 @@ export default defineSchema({
     .index("by_platform", ["platform"])
     .index("by_author", ["author"])
     .index("by_campaign", ["campaign"])
-    .index("by_scheduled", ["scheduled_date"]),
+    .index("by_scheduled", ["scheduled_date"])
+    .index("by_parent", ["parent_id"]),
 
   campaigns: defineTable({
     name: v.string(),
