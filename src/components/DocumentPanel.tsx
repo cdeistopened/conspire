@@ -48,6 +48,7 @@ export function DocumentPanel({ document, onClose }: Props) {
   const [tab, setTab] = useState<"quick" | "proof">(document.proof_slug ? "proof" : "quick");
   const [saved, setSaved] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const titleInput = useRef<HTMLInputElement>(null);
 
@@ -128,8 +129,8 @@ export function DocumentPanel({ document, onClose }: Props) {
   };
 
   return (
-    <div className="panel-overlay" onClick={onClose}>
-      <div className="panel" onClick={(e) => e.stopPropagation()}>
+    <div className={`panel-overlay ${expanded ? "panel-expanded" : ""}`} onClick={onClose}>
+      <div className={`panel ${expanded ? "panel-full" : ""}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="panel-header">
           <div className="panel-header-left">
@@ -174,6 +175,21 @@ export function DocumentPanel({ document, onClose }: Props) {
             </div>
           </div>
           <div className="panel-header-right">
+            <button
+              className="btn-ghost panel-expand"
+              onClick={() => setExpanded((e) => !e)}
+              title={expanded ? "Minimize" : "Expand"}
+            >
+              {expanded ? (
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M10 2h4v4M6 14H2v-4M14 2L9.5 6.5M2 14l4.5-4.5" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M2 6V2h4M14 10v4h-4M2 2l4.5 4.5M14 14L9.5 9.5" />
+                </svg>
+              )}
+            </button>
             <button className="btn-ghost panel-close" onClick={onClose}>
               &times;
             </button>
