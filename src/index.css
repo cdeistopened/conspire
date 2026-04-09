@@ -986,6 +986,23 @@ body {
   transition: all var(--duration-fast) var(--ease-out);
 }
 
+.date-input {
+  padding: 5px var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--charcoal);
+  cursor: pointer;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
 .control-group select:focus {
   outline: none;
   border-color: var(--gold);
@@ -1444,6 +1461,59 @@ body {
   font-size: 0.65rem;
   color: var(--gray-300);
   flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════
+   Content Type Grid (New Post Modal)
+   ═══════════════════════════════════════════ */
+
+.content-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.content-type-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-sm) var(--space-xs);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--gray-200);
+  background: white;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  text-align: center;
+}
+
+.content-type-option:hover {
+  border-color: var(--gray-300);
+  background: var(--gray-100);
+}
+
+.content-type-option.selected {
+  border-color: var(--gold);
+  background: var(--gold-subtle);
+}
+
+.ct-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.ct-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.ct-desc {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--gray-300);
+  line-height: 1.3;
 }
 
 /* ═══════════════════════════════════════════

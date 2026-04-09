@@ -22,6 +22,7 @@ const PLATFORM_CONFIG: Record<string, { label: string; charLimit: number; postUr
   substack: { label: "Substack", charLimit: 0 },
   webflow: { label: "Webflow", charLimit: 0 },
   beehiiv: { label: "Beehiiv", charLimit: 0 },
+  youtube: { label: "YouTube", charLimit: 5000, postUrl: "https://studio.youtube.com" },
 };
 
 const PLATFORM_LABELS: Record<string, string> = Object.fromEntries(
@@ -242,6 +243,20 @@ export function DocumentPanel({ document, onClose }: Props) {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="control-group">
+            <label>Publish</label>
+            <input
+              type="date"
+              className="date-input"
+              defaultValue={document.publish_date ? new Date(document.publish_date).toISOString().split("T")[0] : ""}
+              onChange={async (e) => {
+                const val = e.target.value;
+                if (val) {
+                  await updateDoc({ id: document._id, publish_date: new Date(val).getTime() } as any);
+                }
+              }}
+            />
           </div>
         </div>
 

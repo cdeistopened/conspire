@@ -1,19 +1,38 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+const DOC_TYPE_VALIDATOR = v.union(
+  v.literal("social_post"),
+  v.literal("short_form_video"),
+  v.literal("blog_draft"),
+  v.literal("podcast"),
+  v.literal("newsletter"),
+  v.literal("note")
+);
+
+const PLATFORM_VALIDATOR = v.union(
+  v.literal("x"),
+  v.literal("linkedin"),
+  v.literal("instagram"),
+  v.literal("facebook"),
+  v.literal("tiktok"),
+  v.literal("substack"),
+  v.literal("webflow"),
+  v.literal("beehiiv"),
+  v.literal("youtube")
+);
+
+const STATUS_VALIDATOR = v.union(
+  v.literal("draft"),
+  v.literal("review"),
+  v.literal("approved"),
+  v.literal("scheduled"),
+  v.literal("posted"),
+  v.literal("archived")
+);
+
 export const listByStatus = query({
-  args: {
-    status: v.optional(
-      v.union(
-        v.literal("draft"),
-        v.literal("review"),
-        v.literal("approved"),
-        v.literal("scheduled"),
-        v.literal("posted"),
-        v.literal("archived")
-      )
-    ),
-  },
+  args: { status: v.optional(STATUS_VALIDATOR) },
   handler: async (ctx, args) => {
     if (args.status) {
       return ctx.db
@@ -45,24 +64,8 @@ export const get = query({
 export const create = mutation({
   args: {
     title: v.string(),
-    doc_type: v.union(
-      v.literal("social_post"),
-      v.literal("blog_draft"),
-      v.literal("newsletter"),
-      v.literal("note")
-    ),
-    platform: v.optional(
-      v.union(
-        v.literal("x"),
-        v.literal("linkedin"),
-        v.literal("instagram"),
-        v.literal("facebook"),
-        v.literal("tiktok"),
-        v.literal("substack"),
-        v.literal("webflow"),
-        v.literal("beehiiv")
-      )
-    ),
+    doc_type: DOC_TYPE_VALIDATOR,
+    platform: v.optional(PLATFORM_VALIDATOR),
     author: v.string(),
     body: v.optional(v.string()),
     source: v.optional(v.string()),
@@ -70,6 +73,11 @@ export const create = mutation({
     thumbnail_url: v.optional(v.string()),
     meta_description: v.optional(v.string()),
     parent_id: v.optional(v.id("documents")),
+    publish_date: v.optional(v.number()),
+    title_variants: v.optional(v.array(v.string())),
+    thumbnail_urls: v.optional(v.array(v.string())),
+    transcript: v.optional(v.string()),
+    descript_url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const docId = await ctx.db.insert("documents", {
@@ -91,14 +99,7 @@ export const create = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("documents"),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("review"),
-      v.literal("approved"),
-      v.literal("scheduled"),
-      v.literal("posted"),
-      v.literal("archived")
-    ),
+    status: STATUS_VALIDATOR,
     actor: v.string(),
   },
   handler: async (ctx, args) => {
@@ -111,19 +112,10 @@ export const update = mutation({
     id: v.id("documents"),
     title: v.optional(v.string()),
     body: v.optional(v.string()),
-    platform: v.optional(
-      v.union(
-        v.literal("x"),
-        v.literal("linkedin"),
-        v.literal("instagram"),
-        v.literal("facebook"),
-        v.literal("tiktok"),
-        v.literal("substack"),
-        v.literal("webflow"),
-        v.literal("beehiiv")
-      )
-    ),
+    doc_type: v.optional(DOC_TYPE_VALIDATOR),
+    platform: v.optional(PLATFORM_VALIDATOR),
     scheduled_date: v.optional(v.number()),
+    publish_date: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),
     proof_slug: v.optional(v.string()),
     proof_token: v.optional(v.string()),
@@ -131,6 +123,10 @@ export const update = mutation({
     thumbnail_url: v.optional(v.string()),
     meta_description: v.optional(v.string()),
     parent_id: v.optional(v.id("documents")),
+    title_variants: v.optional(v.array(v.string())),
+    thumbnail_urls: v.optional(v.array(v.string())),
+    transcript: v.optional(v.string()),
+    descript_url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

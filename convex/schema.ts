@@ -8,7 +8,9 @@ export default defineSchema({
     proof_token: v.optional(v.string()),
     doc_type: v.union(
       v.literal("social_post"),
+      v.literal("short_form_video"),
       v.literal("blog_draft"),
+      v.literal("podcast"),
       v.literal("newsletter"),
       v.literal("note")
     ),
@@ -29,13 +31,15 @@ export default defineSchema({
         v.literal("tiktok"),
         v.literal("substack"),
         v.literal("webflow"),
-        v.literal("beehiiv")
+        v.literal("beehiiv"),
+        v.literal("youtube")
       )
     ),
     author: v.string(),
     body: v.optional(v.string()),
     scheduled_date: v.optional(v.number()),
     published_date: v.optional(v.number()),
+    publish_date: v.optional(v.number()),
     campaign: v.optional(v.id("campaigns")),
     source: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
@@ -45,6 +49,13 @@ export default defineSchema({
     external_id: v.optional(v.string()),
     external_url: v.optional(v.string()),
     media: v.optional(v.array(v.id("_storage"))),
+
+    // Podcast/YouTube specific
+    title_variants: v.optional(v.array(v.string())),       // up to 3 A/B titles
+    thumbnail_urls: v.optional(v.array(v.string())),        // up to 3 A/B thumbnails
+    transcript: v.optional(v.string()),                      // full transcript text
+    descript_url: v.optional(v.string()),                    // share.descript.com link
+
     performance: v.optional(
       v.object({
         likes: v.optional(v.number()),

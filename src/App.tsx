@@ -6,11 +6,13 @@ import { NewPostModal } from "./components/NewPostModal";
 import { DocumentPanel } from "./components/DocumentPanel";
 import type { Doc } from "../convex/_generated/dataModel";
 
-type ViewFilter = "all" | "social" | "blog" | "newsletter";
+type ViewFilter = "all" | "social" | "video" | "podcast" | "blog" | "newsletter";
 
 const VIEW_FILTERS: { key: ViewFilter; label: string; docTypes: string[] }[] = [
-  { key: "all", label: "All Posts", docTypes: [] },
-  { key: "social", label: "Social Media", docTypes: ["social_post"] },
+  { key: "all", label: "All Content", docTypes: [] },
+  { key: "social", label: "Social Posts", docTypes: ["social_post"] },
+  { key: "video", label: "Short-Form Video", docTypes: ["short_form_video"] },
+  { key: "podcast", label: "Podcast / YouTube", docTypes: ["podcast"] },
   { key: "blog", label: "Blog / SEO", docTypes: ["blog_draft"] },
   { key: "newsletter", label: "Newsletter", docTypes: ["newsletter"] },
 ];
@@ -31,8 +33,8 @@ export function App() {
 
   const handleCreate = async (data: {
     title: string;
-    platform: string;
     doc_type: string;
+    platform?: string;
     body?: string;
   }) => {
     await createDocument({
