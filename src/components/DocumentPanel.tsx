@@ -345,11 +345,7 @@ export function DocumentPanel({ document, onClose }: Props) {
             {document.thumbnail_url ? (
               <img src={document.thumbnail_url} alt="" />
             ) : (
-              <div className="dropzone-placeholder">
-                {document.platform === "instagram" || document.platform === "tiktok"
-                  ? "Drop image or video"
-                  : "Drop thumbnail image"}
-              </div>
+              <div className="dropzone-placeholder">Drop media</div>
             )}
           </div>
           <div className="prop-field">
@@ -387,21 +383,6 @@ export function DocumentPanel({ document, onClose }: Props) {
           >
             {copied ? "Copied!" : "Copy text"}
           </button>
-          {document.platform && PLATFORM_CONFIG[document.platform]?.postUrl && (
-            <a
-              className="btn-action"
-              href={
-                document.platform === "x"
-                  ? `${PLATFORM_CONFIG[document.platform].postUrl}${encodeURIComponent(bodyDraft)}`
-                  : PLATFORM_CONFIG[document.platform].postUrl
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              title={`Open in ${PLATFORM_CONFIG[document.platform]?.label} to post manually`}
-            >
-              Post in {PLATFORM_CONFIG[document.platform]?.label} ↗
-            </a>
-          )}
           {document.platform && PLATFORM_CONFIG[document.platform]?.charLimit > 0 && (
             <span
               className={`char-counter ${
