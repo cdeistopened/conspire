@@ -11,8 +11,14 @@ const MIME = {
   ".css": "text/css",
   ".json": "application/json",
   ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
+  ".mp4": "video/mp4",
+  ".woff2": "font/woff2",
 };
 
 createServer((req, res) => {
