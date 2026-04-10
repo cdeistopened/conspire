@@ -3,7 +3,7 @@ import { action, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
-const PROOF_BASE = "https://www.proofeditor.ai";
+const PROOF_BASE = "https://proof-editor-production.up.railway.app";
 
 // Create a Proof doc and a Convex document record in one action
 export const createWithProof = action({

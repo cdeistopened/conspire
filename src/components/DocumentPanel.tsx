@@ -428,7 +428,7 @@ export function DocumentPanel({ document, onClose }: Props) {
           </button>
           {document.proof_slug && (
             <a
-              href={`${PROOF_BASE}/d/${document.proof_slug}?token=${document.proof_token}`}
+              href={`${PROOF_BASE}/d/${document.proof_slug}?token=${document.proof_token}&theme=writer`}
               target="_blank"
               rel="noopener noreferrer"
               className="panel-tab panel-tab-link"
@@ -442,7 +442,7 @@ export function DocumentPanel({ document, onClose }: Props) {
         <div className="panel-editor">
           {tab === "proof" && document.proof_slug ? (
             <iframe
-              src={`${PROOF_BASE}/d/${document.proof_slug}?token=${document.proof_token}`}
+              src={`${PROOF_BASE}/d/${document.proof_slug}?token=${document.proof_token}&theme=writer`}
               title="Proof Editor"
               className="proof-iframe"
             />
