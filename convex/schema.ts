@@ -51,10 +51,16 @@ export default defineSchema({
     media: v.optional(v.array(v.id("_storage"))),
 
     // Podcast/YouTube specific
-    title_variants: v.optional(v.array(v.string())),       // up to 3 A/B titles
-    thumbnail_urls: v.optional(v.array(v.string())),        // up to 3 A/B thumbnails
-    transcript: v.optional(v.string()),                      // full transcript text
+    title_variants: v.optional(v.array(v.string())),       // 2 A/B titles
+    thumbnail_urls: v.optional(v.array(v.string())),        // 4 slots: 3 A/B + 1 watercolor
+    transcript: v.optional(v.string()),                      // raw transcript (from Descript)
+    polished_transcript: v.optional(v.string()),             // polished transcript for Webflow blog HTML box
+    youtube_show_notes: v.optional(v.string()),              // YouTube description / show notes
     descript_url: v.optional(v.string()),                    // share.descript.com link
+
+    // Newsletter specific
+    newsletter_subject: v.optional(v.string()),              // distinct from title
+    newsletter_preview: v.optional(v.string()),              // preview text under subject
 
     performance: v.optional(
       v.object({

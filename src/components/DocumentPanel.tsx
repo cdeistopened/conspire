@@ -40,6 +40,8 @@ export function DocumentPanel({ document, onClose }: Props) {
   const linkToProof = useAction(api.proof.linkExisting);
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const saveThumbnail = useMutation(api.documents.saveThumbnail);
+  const setThumbnailSlot = useMutation(api.documents.setThumbnailSlot);
+  const clearThumbnailSlot = useMutation(api.documents.clearThumbnailSlot);
   const removeDoc = useMutation(api.documents.remove);
   const activity = useQuery(api.activity.listByDocument, {
     document: document._id,
@@ -369,6 +371,203 @@ export function DocumentPanel({ document, onClose }: Props) {
             )}
           </div>
         </div>
+
+        {/* Type-specific fields */}
+        {document.doc_type === "podcast" && (
+          <div className="panel-type-fields">
+            <div className="type-fields-header">Podcast / YouTube</div>
+
+            <div className="prop-field">
+              <label>Title variants (A/B)</label>
+              <input
+                className="prop-input"
+                type="text"
+                placeholder="Title A..."
+                defaultValue={document.title_variants?.[0] ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  const next = [...(document.title_variants ?? [])];
+                  while (next.length < 2) next.push("");
+                  next[0] = val;
+                  await updateDoc({ id: document._id, title_variants: next });
+                }}
+              />
+              <input
+                className="prop-input"
+                type="text"
+                placeholder="Title B..."
+                defaultValue={document.title_variants?.[1] ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  const next = [...(document.title_variants ?? [])];
+                  while (next.length < 2) next.push("");
+                  next[1] = val;
+                  await updateDoc({ id: document._id, title_variants: next });
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>Thumbnails (3 A/B + watercolor)</label>
+              <div className="thumbnail-grid">
+                {[0, 1, 2, 3].map((slot) => {
+                  const url = document.thumbnail_urls?.[slot] || "";
+                  const label = slot === 3 ? "Watercolor" : `A/B ${slot + 1}`;
+                  return (
+                    <div
+                      key={slot}
+                      className={`thumbnail-slot ${url ? "has-image" : ""}`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add("drag-over");
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.classList.remove("drag-over");
+                      }}
+                      onDrop={async (e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("drag-over");
+                        const file = e.dataTransfer.files[0];
+                        if (!file || !file.type.startsWith("image/")) return;
+                        const uploadUrl = await generateUploadUrl();
+                        const res = await fetch(uploadUrl, {
+                          method: "POST",
+                          headers: { "Content-Type": file.type },
+                          body: file,
+                        });
+                        const { storageId } = await res.json();
+                        await setThumbnailSlot({
+                          id: document._id,
+                          storageId,
+                          slot,
+                        });
+                      }}
+                    >
+                      {url ? (
+                        <>
+                          <img src={url} alt={label} />
+                          <button
+                            className="thumbnail-slot-clear"
+                            onClick={() =>
+                              clearThumbnailSlot({ id: document._id, slot })
+                            }
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        </>
+                      ) : (
+                        <div className="thumbnail-slot-placeholder">
+                          <div className="thumbnail-slot-label">{label}</div>
+                          <div className="thumbnail-slot-hint">Drop image</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="prop-field">
+              <label>Descript share URL</label>
+              <input
+                className="prop-input"
+                type="url"
+                placeholder="https://share.descript.com/..."
+                defaultValue={document.descript_url ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  if (val !== (document.descript_url ?? "")) {
+                    await updateDoc({
+                      id: document._id,
+                      descript_url: val || undefined,
+                    });
+                  }
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>Polished transcript (Webflow blog HTML box)</label>
+              <textarea
+                className="prop-textarea"
+                placeholder="Polished transcript that gets ported to the Webflow blog..."
+                defaultValue={document.polished_transcript ?? ""}
+                rows={6}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== (document.polished_transcript ?? "")) {
+                    await updateDoc({
+                      id: document._id,
+                      polished_transcript: val || undefined,
+                    });
+                  }
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>YouTube show notes</label>
+              <textarea
+                className="prop-textarea"
+                placeholder="Show notes for YouTube description..."
+                defaultValue={document.youtube_show_notes ?? ""}
+                rows={4}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== (document.youtube_show_notes ?? "")) {
+                    await updateDoc({
+                      id: document._id,
+                      youtube_show_notes: val || undefined,
+                    });
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {document.doc_type === "newsletter" && (
+          <div className="panel-type-fields">
+            <div className="type-fields-header">Newsletter</div>
+            <div className="prop-field">
+              <label>Subject line</label>
+              <input
+                className="prop-input"
+                type="text"
+                placeholder="Subject line (distinct from title)..."
+                defaultValue={document.newsletter_subject ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  if (val !== (document.newsletter_subject ?? "")) {
+                    await updateDoc({
+                      id: document._id,
+                      newsletter_subject: val || undefined,
+                    });
+                  }
+                }}
+              />
+            </div>
+            <div className="prop-field">
+              <label>Preview text</label>
+              <input
+                className="prop-input"
+                type="text"
+                placeholder="Preview text shown under subject in inbox..."
+                defaultValue={document.newsletter_preview ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  if (val !== (document.newsletter_preview ?? "")) {
+                    await updateDoc({
+                      id: document._id,
+                      newsletter_preview: val || undefined,
+                    });
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Action bar */}
         <div className="panel-actions">

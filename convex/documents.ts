@@ -126,7 +126,11 @@ export const update = mutation({
     title_variants: v.optional(v.array(v.string())),
     thumbnail_urls: v.optional(v.array(v.string())),
     transcript: v.optional(v.string()),
+    polished_transcript: v.optional(v.string()),
+    youtube_show_notes: v.optional(v.string()),
     descript_url: v.optional(v.string()),
+    newsletter_subject: v.optional(v.string()),
+    newsletter_preview: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -154,6 +158,41 @@ export const saveThumbnail = mutation({
   handler: async (ctx, args) => {
     const url = await ctx.storage.getUrl(args.storageId);
     await ctx.db.patch(args.id, { thumbnail_url: url ?? undefined });
+  },
+});
+
+export const setThumbnailSlot = mutation({
+  args: {
+    id: v.id("documents"),
+    storageId: v.id("_storage"),
+    slot: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const url = await ctx.storage.getUrl(args.storageId);
+    if (!url) return;
+    const doc = await ctx.db.get(args.id);
+    if (!doc) return;
+    const current = doc.thumbnail_urls ?? [];
+    const next = [...current];
+    while (next.length <= args.slot) next.push("");
+    next[args.slot] = url;
+    await ctx.db.patch(args.id, { thumbnail_urls: next });
+  },
+});
+
+export const clearThumbnailSlot = mutation({
+  args: {
+    id: v.id("documents"),
+    slot: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.id);
+    if (!doc) return;
+    const current = doc.thumbnail_urls ?? [];
+    if (args.slot >= current.length) return;
+    const next = [...current];
+    next[args.slot] = "";
+    await ctx.db.patch(args.id, { thumbnail_urls: next });
   },
 });
 
