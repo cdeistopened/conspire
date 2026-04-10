@@ -314,9 +314,14 @@ export function DocumentPanel({ document, onClose }: Props) {
           <div className="control-group">
             <label>Publish</label>
             <input
-              type="date"
+              type="datetime-local"
               className="date-input"
-              defaultValue={document.publish_date ? new Date(document.publish_date).toISOString().split("T")[0] : ""}
+              defaultValue={(() => {
+                if (!document.publish_date) return "";
+                const d = new Date(document.publish_date);
+                const pad = (n: number) => String(n).padStart(2, "0");
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+              })()}
               onChange={async (e) => {
                 const val = e.target.value;
                 if (val) {
@@ -327,50 +332,85 @@ export function DocumentPanel({ document, onClose }: Props) {
           </div>
         </div>
 
-        {/* Properties */}
-        <div className="panel-properties">
-          <div
-            className={`prop-dropzone ${document.thumbnail_url ? "has-image" : ""}`}
-            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }}
-            onDragLeave={(e) => { e.currentTarget.classList.remove("drag-over"); }}
-            onDrop={async (e) => {
-              e.preventDefault();
-              e.currentTarget.classList.remove("drag-over");
-              const file = e.dataTransfer.files[0];
-              if (!file || !file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
-              const uploadUrl = await generateUploadUrl();
-              const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
-              const { storageId } = await res.json();
-              await saveThumbnail({ id: document._id, storageId });
-            }}
-          >
-            {document.thumbnail_url ? (
-              <img src={document.thumbnail_url} alt="" />
-            ) : (
-              <div className="dropzone-placeholder">Drop media</div>
-            )}
-          </div>
-          <div className="prop-field">
-            <label>Description</label>
-            <textarea
-              className="prop-textarea"
-              placeholder={document.platform === "webflow" ? "Meta description for SEO (aim for 155 chars)..." : "Post description..."}
-              defaultValue={document.meta_description ?? ""}
-              rows={2}
-              onBlur={async (e) => {
-                const val = e.target.value.trim();
-                if (val !== (document.meta_description ?? "")) {
-                  await updateDoc({ id: document._id, meta_description: val || undefined } as any);
-                }
+        {/* Properties (generic) — podcast hides entirely (its own section); newsletter hides description */}
+        {document.doc_type !== "podcast" && (
+          <div className="panel-properties">
+            <div
+              className={`prop-dropzone ${document.thumbnail_url ? "has-image" : ""}`}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }}
+              onDragLeave={(e) => { e.currentTarget.classList.remove("drag-over"); }}
+              onDrop={async (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove("drag-over");
+                const file = e.dataTransfer.files[0];
+                if (!file || (!file.type.startsWith("image/") && !file.type.startsWith("video/"))) return;
+                const uploadUrl = await generateUploadUrl();
+                const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+                const { storageId } = await res.json();
+                await saveThumbnail({ id: document._id, storageId, contentType: file.type });
               }}
-            />
-            {document.meta_description && document.platform === "webflow" && (
-              <span className={`prop-char-count ${document.meta_description.length > 155 ? "over" : ""}`}>
-                {document.meta_description.length}/155
-              </span>
+            >
+              {document.thumbnail_url ? (
+                document.thumbnail_type === "video" ? (
+                  <video src={document.thumbnail_url} controls className="prop-dropzone-video" />
+                ) : (
+                  <img src={document.thumbnail_url} alt="" />
+                )
+              ) : (
+                <div className="dropzone-placeholder">Drop image or video</div>
+              )}
+            </div>
+            {document.doc_type !== "newsletter" && (
+              <div className="prop-field">
+                <label>Description</label>
+                <textarea
+                  className="prop-textarea"
+                  placeholder={document.platform === "webflow" ? "Meta description for SEO (aim for 155 chars)..." : "Post description..."}
+                  defaultValue={document.meta_description ?? ""}
+                  rows={2}
+                  onBlur={async (e) => {
+                    const val = e.target.value.trim();
+                    if (val !== (document.meta_description ?? "")) {
+                      await updateDoc({ id: document._id, meta_description: val || undefined } as any);
+                    }
+                  }}
+                />
+                {document.meta_description && document.platform === "webflow" && (
+                  <span className={`prop-char-count ${document.meta_description.length > 155 ? "over" : ""}`}>
+                    {document.meta_description.length}/155
+                  </span>
+                )}
+              </div>
+            )}
+            {(document.doc_type === "social_post" || document.doc_type === "short_form_video") && (
+              <div className="prop-field">
+                <label>Descript share URL</label>
+                <input
+                  className="prop-input"
+                  type="url"
+                  placeholder="https://share.descript.com/..."
+                  defaultValue={document.descript_url ?? ""}
+                  onBlur={async (e) => {
+                    const val = e.target.value.trim();
+                    if (val !== (document.descript_url ?? "")) {
+                      await updateDoc({ id: document._id, descript_url: val || undefined });
+                    }
+                  }}
+                />
+                {document.descript_url && (
+                  <div className="descript-embed">
+                    <iframe
+                      src={document.descript_url.replace("/view/", "/embed/")}
+                      title="Descript embed"
+                      className="descript-iframe"
+                      allow="autoplay; fullscreen"
+                    />
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        )}
 
         {/* Type-specific fields */}
         {document.doc_type === "podcast" && (

@@ -44,6 +44,7 @@ export default defineSchema({
     source: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     thumbnail_url: v.optional(v.string()),
+    thumbnail_type: v.optional(v.string()),   // "image" | "video"
     meta_description: v.optional(v.string()),
     parent_id: v.optional(v.id("documents")),
     external_id: v.optional(v.string()),

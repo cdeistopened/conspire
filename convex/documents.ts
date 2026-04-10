@@ -121,6 +121,7 @@ export const update = mutation({
     proof_token: v.optional(v.string()),
     source: v.optional(v.string()),
     thumbnail_url: v.optional(v.string()),
+    thumbnail_type: v.optional(v.string()),
     meta_description: v.optional(v.string()),
     parent_id: v.optional(v.id("documents")),
     title_variants: v.optional(v.array(v.string())),
@@ -154,10 +155,15 @@ export const saveThumbnail = mutation({
   args: {
     id: v.id("documents"),
     storageId: v.id("_storage"),
+    contentType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const url = await ctx.storage.getUrl(args.storageId);
-    await ctx.db.patch(args.id, { thumbnail_url: url ?? undefined });
+    const kind = args.contentType?.startsWith("video/") ? "video" : "image";
+    await ctx.db.patch(args.id, {
+      thumbnail_url: url ?? undefined,
+      thumbnail_type: kind,
+    });
   },
 });
 
