@@ -37,6 +37,7 @@ interface Props {
 export function DocumentPanel({ document, onClose }: Props) {
   const updateStatus = useMutation(api.documents.updateStatus);
   const updateDoc = useMutation(api.documents.update);
+  const createDoc = useMutation(api.documents.create);
   const linkToProof = useAction(api.proof.linkExisting);
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const saveThumbnail = useMutation(api.documents.saveThumbnail);
@@ -62,6 +63,8 @@ export function DocumentPanel({ document, onClose }: Props) {
   const [saved, setSaved] = useState(true);
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [childPickerOpen, setChildPickerOpen] = useState(false);
+  const [childSearch, setChildSearch] = useState("");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const titleInput = useRef<HTMLInputElement>(null);
 
@@ -722,43 +725,115 @@ export function DocumentPanel({ document, onClose }: Props) {
 
         {/* Parent / Children links */}
         <div className="panel-links">
-          <div className="links-row">
-            <label>Parent</label>
-            {parentDoc ? (
-              <span className="link-chip" onClick={() => onClose()}>
-                {parentDoc.title}
+          {parentDoc && (
+            <div className="links-row">
+              <label>Part of</label>
+              <span className="link-chip parent-chip" onClick={() => onClose()}>
+                ↑ {parentDoc.title}
               </span>
-            ) : (
-              <select
-                className="link-select"
-                value=""
-                onChange={async (e) => {
-                  if (e.target.value) {
-                    await updateDoc({ id: document._id, parent_id: e.target.value as any });
-                  }
+              <button
+                className="link-unlink"
+                title="Unlink from parent"
+                onClick={async () => {
+                  await updateDoc({ id: document._id, parent_id: undefined as any });
                 }}
               >
-                <option value="">Link to parent...</option>
-                {allDocs
-                  ?.filter((d) => d._id !== document._id && !d.parent_id)
-                  .map((d) => (
-                    <option key={d._id} value={d._id}>
-                      {d.title}
-                    </option>
-                  ))}
-              </select>
-            )}
+                ×
+              </button>
+            </div>
+          )}
+          <div className="links-children">
+            <label>Linked ({children?.length ?? 0})</label>
+            <div className="children-list">
+              {children?.map((c) => (
+                <span key={c._id} className="link-chip child-chip">
+                  {c.platform && <span className="chip-dot" style={{ background: `var(--platform-${c.platform})` }} />}
+                  {c.title}
+                </span>
+              ))}
+              <button
+                className="link-add-btn"
+                onClick={() => {
+                  setChildPickerOpen((v) => !v);
+                  setChildSearch("");
+                }}
+              >
+                {childPickerOpen ? "× Cancel" : "+ Add linked child"}
+              </button>
+            </div>
           </div>
-          {children && children.length > 0 && (
-            <div className="links-children">
-              <label>Spokes ({children.length})</label>
-              <div className="children-list">
-                {children.map((c) => (
-                  <span key={c._id} className="link-chip child-chip">
-                    {c.platform && <span className="chip-dot" style={{ background: `var(--platform-${c.platform})` }} />}
-                    {c.title}
-                  </span>
-                ))}
+          {childPickerOpen && (
+            <div className="child-picker">
+              <div className="child-picker-section">
+                <div className="child-picker-header">Create new</div>
+                <div className="child-picker-buttons">
+                  {[
+                    { type: "social_post", label: "Social Post" },
+                    { type: "short_form_video", label: "Short-Form Video" },
+                    { type: "blog_draft", label: "Blog" },
+                    { type: "newsletter", label: "Newsletter" },
+                    { type: "note", label: "Note" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.type}
+                      className="child-picker-create-btn"
+                      onClick={async () => {
+                        await createDoc({
+                          title: `New ${opt.label}`,
+                          doc_type: opt.type as any,
+                          author: "Charlie",
+                          parent_id: document._id,
+                        });
+                        setChildPickerOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="child-picker-section">
+                <div className="child-picker-header">Or link existing</div>
+                <input
+                  type="text"
+                  className="child-picker-search"
+                  placeholder="Search docs..."
+                  value={childSearch}
+                  onChange={(e) => setChildSearch(e.target.value)}
+                  autoFocus
+                />
+                <div className="child-picker-list">
+                  {allDocs
+                    ?.filter((d) => {
+                      if (d._id === document._id) return false;
+                      if (d.parent_id) return false;
+                      if (!childSearch) return true;
+                      return d.title.toLowerCase().includes(childSearch.toLowerCase());
+                    })
+                    .slice(0, 10)
+                    .map((d) => (
+                      <button
+                        key={d._id}
+                        className="child-picker-result"
+                        onClick={async () => {
+                          await updateDoc({ id: d._id, parent_id: document._id });
+                          setChildPickerOpen(false);
+                        }}
+                      >
+                        {d.platform && (
+                          <span
+                            className="chip-dot"
+                            style={{ background: `var(--platform-${d.platform})` }}
+                          />
+                        )}
+                        <span className="child-picker-result-title">{d.title}</span>
+                        <span className="child-picker-result-type">{d.doc_type}</span>
+                      </button>
+                    ))}
+                  {allDocs && allDocs.filter((d) => d._id !== document._id && !d.parent_id && (!childSearch || d.title.toLowerCase().includes(childSearch.toLowerCase()))).length === 0 && (
+                    <div className="child-picker-empty">No unlinked docs match.</div>
+                  )}
+                </div>
               </div>
             </div>
           )}
