@@ -13,6 +13,7 @@ import type * as campaigns from "../campaigns.js";
 import type * as documents from "../documents.js";
 import type * as http from "../http.js";
 import type * as proof from "../proof.js";
+import type * as scheduler from "../scheduler.js";
 import type * as seed from "../seed.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   documents: typeof documents;
   http: typeof http;
   proof: typeof proof;
+  scheduler: typeof scheduler;
   seed: typeof seed;
 }>;
 

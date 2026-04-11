@@ -1717,6 +1717,37 @@ body {
   background: var(--gold-subtle);
 }
 
+.btn-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-action:disabled:hover {
+  border-color: var(--gray-200);
+  color: var(--gray-700);
+  background: white;
+}
+
+.btn-action-primary {
+  border-color: var(--gold);
+  color: var(--charcoal);
+  background: var(--gold-subtle);
+  font-weight: 600;
+}
+
+.btn-action-primary:hover {
+  border-color: var(--gold);
+  background: var(--gold, #C8943E);
+  color: white;
+}
+
+.btn-action-scheduled {
+  border-color: var(--green, #4A9B6E);
+  color: var(--green, #4A9B6E);
+  background: rgba(74, 155, 110, 0.08);
+  cursor: default;
+}
+
 .char-counter {
   font-family: var(--font-mono);
   font-size: 0.7rem;

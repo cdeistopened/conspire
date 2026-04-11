@@ -67,6 +67,11 @@ export default defineSchema({
     newsletter_subject: v.optional(v.string()),              // distinct from title
     newsletter_preview: v.optional(v.string()),              // preview text under subject
 
+    // Zernio scheduling (RLM workspace, other workspaces can opt in)
+    zernio_post_id: v.optional(v.string()),                  // returned by POST /api/v1/posts
+    zernio_scheduled_at: v.optional(v.number()),             // when we handed it to Zernio
+    zernio_error: v.optional(v.string()),                    // last failure message, if any
+
     performance: v.optional(
       v.object({
         likes: v.optional(v.number()),

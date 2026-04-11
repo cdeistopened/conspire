@@ -145,6 +145,9 @@ export const update = mutation({
     descript_url: v.optional(v.string()),
     newsletter_subject: v.optional(v.string()),
     newsletter_preview: v.optional(v.string()),
+    zernio_post_id: v.optional(v.string()),
+    zernio_scheduled_at: v.optional(v.number()),
+    zernio_error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

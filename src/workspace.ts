@@ -31,7 +31,7 @@ export interface WorkspaceConfig {
   defaultAuthor: string;
   docTypes: DocType[];
   platforms: PlatformKey[];
-  scheduler: "manual" | "feedhive";
+  scheduler: "manual" | "zernio";
 }
 
 const configs: Record<string, WorkspaceConfig> = {

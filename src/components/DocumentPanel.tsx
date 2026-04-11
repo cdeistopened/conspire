@@ -49,6 +49,7 @@ export function DocumentPanel({ document, onClose }: Props) {
   const updateDoc = useMutation(api.documents.update);
   const createDoc = useMutation(api.documents.create);
   const linkToProof = useAction(api.proof.linkExisting);
+  const publishToZernio = useAction(api.scheduler.publishToZernio);
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const saveThumbnail = useMutation(api.documents.saveThumbnail);
   const setThumbnailSlot = useMutation(api.documents.setThumbnailSlot);
@@ -75,6 +76,7 @@ export function DocumentPanel({ document, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [childPickerOpen, setChildPickerOpen] = useState(false);
   const [childSearch, setChildSearch] = useState("");
+  const [publishing, setPublishing] = useState(false);
   // Upload progress: null idle, {target,percent} while uploading. Target is
   // "main" for the generic dropzone or "slot-N" for podcast thumbnail slots.
   const [uploadState, setUploadState] = useState<{ target: string; percent: number } | null>(null);
@@ -723,6 +725,42 @@ export function DocumentPanel({ document, onClose }: Props) {
           >
             {copied ? "Copied!" : "Copy text"}
           </button>
+          {WORKSPACE.scheduler === "zernio" && (
+            document.zernio_post_id ? (
+              <span className="btn-action btn-action-scheduled" title={`Zernio post ${document.zernio_post_id}`}>
+                ✓ Scheduled in Zernio
+              </span>
+            ) : (
+              <button
+                className="btn-action btn-action-primary"
+                disabled={publishing || !bodyDraft.trim() || !document.publish_date}
+                title={
+                  !bodyDraft.trim()
+                    ? "Add a caption first"
+                    : !document.publish_date
+                      ? "Set a publish date/time first"
+                      : "Send this post to Zernio for scheduling"
+                }
+                onClick={async () => {
+                  setPublishing(true);
+                  try {
+                    await publishToZernio({ documentId: document._id });
+                  } catch (err) {
+                    alert(`Publish failed: ${err instanceof Error ? err.message : String(err)}`);
+                  } finally {
+                    setPublishing(false);
+                  }
+                }}
+              >
+                {publishing ? "Publishing..." : "Publish to Feed"}
+              </button>
+            )
+          )}
+          {document.zernio_error && !document.zernio_post_id && (
+            <span className="char-counter over" title={document.zernio_error}>
+              Last error: {document.zernio_error.slice(0, 60)}
+            </span>
+          )}
           {document.platform && PLATFORM_CONFIG[document.platform]?.charLimit > 0 && (
             <span
               className={`char-counter ${
