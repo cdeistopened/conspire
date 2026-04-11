@@ -1188,6 +1188,11 @@ body {
   background: var(--gold-subtle);
 }
 
+.prop-dropzone.uploading {
+  cursor: default;
+  border-color: var(--gold);
+}
+
 .dropzone-placeholder {
   display: flex;
   align-items: center;
@@ -1196,6 +1201,40 @@ body {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--gray-300);
+}
+
+.dropzone-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+}
+
+.dropzone-progress-bar {
+  height: 100%;
+  background: var(--gold, #C8943E);
+  transition: width 150ms linear;
+}
+
+.dropzone-progress-label {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-sm);
+}
+
+.thumbnail-slot.uploading {
+  cursor: default;
+  border-color: var(--gold);
 }
 
 .prop-field {

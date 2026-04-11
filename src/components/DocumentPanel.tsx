@@ -65,6 +65,57 @@ export function DocumentPanel({ document, onClose }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [childPickerOpen, setChildPickerOpen] = useState(false);
   const [childSearch, setChildSearch] = useState("");
+  // Upload progress: null idle, {target,percent} while uploading. Target is
+  // "main" for the generic dropzone or "slot-N" for podcast thumbnail slots.
+  const [uploadState, setUploadState] = useState<{ target: string; percent: number } | null>(null);
+  const mainFileInput = useRef<HTMLInputElement>(null);
+  const slotFileInputs = useRef<Array<HTMLInputElement | null>>([null, null, null, null]);
+
+  // Upload a file via XHR so we get upload.onprogress events (fetch doesn't
+  // expose progress). After the PUT completes, hand the storageId to the
+  // right Convex mutation based on target.
+  const uploadFile = useCallback(async (file: File, target: "main" | `slot-${number}`) => {
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+    setUploadState({ target, percent: 0 });
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const storageId = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", uploadUrl);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadState({ target, percent: Math.round((e.loaded / e.total) * 100) });
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const { storageId } = JSON.parse(xhr.responseText);
+              resolve(storageId);
+            } catch (err) {
+              reject(err);
+            }
+          } else {
+            reject(new Error(`Upload failed: ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload network error"));
+        xhr.send(file);
+      });
+      if (target === "main") {
+        await saveThumbnail({ id: document._id, storageId: storageId as any, contentType: file.type });
+      } else {
+        const slot = parseInt(target.slice(5), 10);
+        await setThumbnailSlot({ id: document._id, storageId: storageId as any, slot });
+      }
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert(`Upload failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setUploadState(null);
+    }
+  }, [document._id, generateUploadUrl, saveThumbnail, setThumbnailSlot]);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const titleInput = useRef<HTMLInputElement>(null);
 
@@ -339,20 +390,31 @@ export function DocumentPanel({ document, onClose }: Props) {
         {document.doc_type !== "podcast" && (
           <div className="panel-properties">
             <div
-              className={`prop-dropzone ${document.thumbnail_url ? "has-image" : ""}`}
+              className={`prop-dropzone ${document.thumbnail_url ? "has-image" : ""} ${uploadState?.target === "main" ? "uploading" : ""}`}
+              onClick={() => {
+                if (uploadState) return;
+                mainFileInput.current?.click();
+              }}
               onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }}
               onDragLeave={(e) => { e.currentTarget.classList.remove("drag-over"); }}
               onDrop={async (e) => {
                 e.preventDefault();
                 e.currentTarget.classList.remove("drag-over");
                 const file = e.dataTransfer.files[0];
-                if (!file || (!file.type.startsWith("image/") && !file.type.startsWith("video/"))) return;
-                const uploadUrl = await generateUploadUrl();
-                const res = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": file.type }, body: file });
-                const { storageId } = await res.json();
-                await saveThumbnail({ id: document._id, storageId, contentType: file.type });
+                if (file) await uploadFile(file, "main");
               }}
             >
+              <input
+                ref={mainFileInput}
+                type="file"
+                accept="image/*,video/*"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await uploadFile(file, "main");
+                  e.target.value = "";
+                }}
+              />
               {document.thumbnail_url ? (
                 document.thumbnail_type === "video" ? (
                   <video src={document.thumbnail_url} controls className="prop-dropzone-video" />
@@ -360,7 +422,15 @@ export function DocumentPanel({ document, onClose }: Props) {
                   <img src={document.thumbnail_url} alt="" />
                 )
               ) : (
-                <div className="dropzone-placeholder">Drop image or video</div>
+                <div className="dropzone-placeholder">
+                  {uploadState?.target === "main" ? "Uploading..." : "Drop or click to add image / video"}
+                </div>
+              )}
+              {uploadState?.target === "main" && (
+                <div className="dropzone-progress">
+                  <div className="dropzone-progress-bar" style={{ width: `${uploadState.percent}%` }} />
+                  <div className="dropzone-progress-label">{uploadState.percent}%</div>
+                </div>
               )}
             </div>
             {document.doc_type !== "newsletter" && (
@@ -456,10 +526,18 @@ export function DocumentPanel({ document, onClose }: Props) {
                 {[0, 1, 2, 3].map((slot) => {
                   const url = document.thumbnail_urls?.[slot] || "";
                   const label = slot === 3 ? "Watercolor" : `A/B ${slot + 1}`;
+                  const slotTarget = `slot-${slot}` as const;
+                  const isUploading = uploadState?.target === slotTarget;
                   return (
                     <div
                       key={slot}
-                      className={`thumbnail-slot ${url ? "has-image" : ""}`}
+                      className={`thumbnail-slot ${url ? "has-image" : ""} ${isUploading ? "uploading" : ""}`}
+                      onClick={(e) => {
+                        if (uploadState) return;
+                        // Ignore clicks on the clear button
+                        if ((e.target as HTMLElement).closest(".thumbnail-slot-clear")) return;
+                        slotFileInputs.current[slot]?.click();
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.currentTarget.classList.add("drag-over");
@@ -471,29 +549,31 @@ export function DocumentPanel({ document, onClose }: Props) {
                         e.preventDefault();
                         e.currentTarget.classList.remove("drag-over");
                         const file = e.dataTransfer.files[0];
-                        if (!file || !file.type.startsWith("image/")) return;
-                        const uploadUrl = await generateUploadUrl();
-                        const res = await fetch(uploadUrl, {
-                          method: "POST",
-                          headers: { "Content-Type": file.type },
-                          body: file,
-                        });
-                        const { storageId } = await res.json();
-                        await setThumbnailSlot({
-                          id: document._id,
-                          storageId,
-                          slot,
-                        });
+                        if (file) await uploadFile(file, slotTarget);
                       }}
                     >
+                      <input
+                        ref={(el) => {
+                          slotFileInputs.current[slot] = el;
+                        }}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) await uploadFile(file, slotTarget);
+                          e.target.value = "";
+                        }}
+                      />
                       {url ? (
                         <>
                           <img src={url} alt={label} />
                           <button
                             className="thumbnail-slot-clear"
-                            onClick={() =>
-                              clearThumbnailSlot({ id: document._id, slot })
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearThumbnailSlot({ id: document._id, slot });
+                            }}
                             title="Remove"
                           >
                             ×
@@ -502,7 +582,14 @@ export function DocumentPanel({ document, onClose }: Props) {
                       ) : (
                         <div className="thumbnail-slot-placeholder">
                           <div className="thumbnail-slot-label">{label}</div>
-                          <div className="thumbnail-slot-hint">Drop image</div>
+                          <div className="thumbnail-slot-hint">
+                            {isUploading ? `${uploadState?.percent ?? 0}%` : "Click or drop"}
+                          </div>
+                        </div>
+                      )}
+                      {isUploading && (
+                        <div className="dropzone-progress">
+                          <div className="dropzone-progress-bar" style={{ width: `${uploadState?.percent ?? 0}%` }} />
                         </div>
                       )}
                     </div>
