@@ -39,7 +39,29 @@ const configs: Record<string, WorkspaceConfig> = {
   rlm: rlmConfig as WorkspaceConfig,
 };
 
-const envKey = (import.meta.env.VITE_WORKSPACE as string | undefined) || "opened";
-const key = configs[envKey] ? envKey : "opened";
+// Workspace resolution:
+//   1. URL query param `?workspace=rlm` wins (lets one Railway service view
+//      multiple workspaces during factory setup, before each gets its own
+//      service). Persisted to localStorage so a refresh keeps the same view.
+//   2. Fall back to VITE_WORKSPACE build-time env var.
+//   3. Default to "opened".
+function resolveWorkspaceKey(): string {
+  if (typeof window !== "undefined") {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get("workspace");
+      if (fromUrl && configs[fromUrl]) {
+        window.localStorage.setItem("conspire_workspace", fromUrl);
+        return fromUrl;
+      }
+      const fromStorage = window.localStorage.getItem("conspire_workspace");
+      if (fromStorage && configs[fromStorage]) return fromStorage;
+    } catch {
+      // ignore storage/URL access errors
+    }
+  }
+  const envKey = (import.meta.env.VITE_WORKSPACE as string | undefined) || "opened";
+  return configs[envKey] ? envKey : "opened";
+}
 
-export const WORKSPACE: WorkspaceConfig = configs[key];
+export const WORKSPACE: WorkspaceConfig = configs[resolveWorkspaceKey()];

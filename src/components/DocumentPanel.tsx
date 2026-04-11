@@ -399,9 +399,12 @@ export function DocumentPanel({ document, onClose }: Props) {
           </div>
         </div>
 
-        {/* Properties (generic) — podcast hides entirely (its own section); newsletter hides description */}
+        {/* Properties (generic) — podcast + short_form_video hide the whole
+            thumbnail zone (video clips use the Descript embed below instead
+            of a still cover image); newsletter hides the description only. */}
         {document.doc_type !== "podcast" && (
           <div className="panel-properties">
+            {document.doc_type !== "short_form_video" && (
             <div
               className={`prop-dropzone ${document.thumbnail_url ? "has-image" : ""} ${uploadState?.target === "main" ? "uploading" : ""}`}
               onClick={() => {
@@ -446,7 +449,8 @@ export function DocumentPanel({ document, onClose }: Props) {
                 </div>
               )}
             </div>
-            {document.doc_type !== "newsletter" && (
+            )}
+            {document.doc_type !== "newsletter" && document.doc_type !== "short_form_video" && (
               <div className="prop-field">
                 <label>Description</label>
                 <textarea
@@ -709,6 +713,40 @@ export function DocumentPanel({ document, onClose }: Props) {
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {document.doc_type === "short_form_video" && (
+          <div className="panel-type-fields">
+            <div className="type-fields-header">Short-Form Video</div>
+
+            <div className="prop-field">
+              <label>On-screen text variants (5 to A/B test)</label>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <input
+                  key={i}
+                  className="prop-input"
+                  type="text"
+                  placeholder={`Variant ${i + 1}...`}
+                  defaultValue={document.title_variants?.[i] ?? ""}
+                  onBlur={async (e) => {
+                    const val = e.target.value;
+                    const next = [...(document.title_variants ?? [])];
+                    while (next.length < 5) next.push("");
+                    if (next[i] === val) return;
+                    next[i] = val;
+                    await updateDoc({ id: document._id, title_variants: next });
+                  }}
+                />
+              ))}
+            </div>
+
+            {document.transcript && (
+              <div className="prop-field">
+                <label>Transcript (read-only)</label>
+                <div className="short-form-transcript">{document.transcript}</div>
+              </div>
+            )}
           </div>
         )}
 

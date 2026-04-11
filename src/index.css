@@ -1237,6 +1237,21 @@ body {
   border-color: var(--gold);
 }
 
+.short-form-transcript {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--charcoal);
+  padding: var(--space-md);
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  max-height: 260px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .prop-field {
   display: flex;
   flex-direction: column;
