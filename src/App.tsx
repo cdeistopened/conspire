@@ -5,10 +5,13 @@ import { KanbanBoard } from "./components/KanbanBoard";
 import { NewPostModal } from "./components/NewPostModal";
 import { DocumentPanel } from "./components/DocumentPanel";
 import type { Doc, Id } from "../convex/_generated/dataModel";
+import { WORKSPACE } from "./workspace";
 
 type ViewFilter = "all" | "social" | "video" | "podcast" | "blog" | "newsletter";
 
-const VIEW_FILTERS: { key: ViewFilter; label: string; docTypes: string[] }[] = [
+// View filters are static across workspaces; each workspace just surfaces
+// the subset it cares about via WORKSPACE.docTypes below.
+const ALL_VIEW_FILTERS: { key: ViewFilter; label: string; docTypes: string[] }[] = [
   { key: "all", label: "All Content", docTypes: [] },
   { key: "social", label: "Social Posts", docTypes: ["social_post"] },
   { key: "video", label: "Short-Form Video", docTypes: ["short_form_video"] },
@@ -17,13 +20,22 @@ const VIEW_FILTERS: { key: ViewFilter; label: string; docTypes: string[] }[] = [
   { key: "newsletter", label: "Newsletter", docTypes: ["newsletter"] },
 ];
 
+// Only show view filters for doc types this workspace actually uses, in the
+// workspace's own priority order. "all" always comes first.
+const VIEW_FILTERS = [
+  ALL_VIEW_FILTERS[0],
+  ...WORKSPACE.docTypes
+    .map((dt) => ALL_VIEW_FILTERS.find((f) => f.docTypes[0] === dt))
+    .filter((f): f is (typeof ALL_VIEW_FILTERS)[number] => f !== undefined),
+];
+
 export function App() {
   const [showNewPost, setShowNewPost] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Doc<"documents"> | null>(null);
   const [showNav, setShowNav] = useState(false);
   const [activeView, setActiveView] = useState<ViewFilter>("all");
   const [pendingOpenId, setPendingOpenId] = useState<Id<"documents"> | null>(null);
-  const documents = useQuery(api.documents.listByStatus, {});
+  const documents = useQuery(api.documents.listByStatus, { workspace: WORKSPACE.name });
   const createDocument = useMutation(api.documents.create);
 
   // Auto-open newly created doc once Convex delivers it
@@ -51,8 +63,9 @@ export function App() {
     const docId = await createDocument({
       title: data.title,
       doc_type: data.doc_type as any,
-      author: "Charlie",
+      author: WORKSPACE.defaultAuthor,
       body: data.body,
+      workspace: WORKSPACE.name,
     });
     setShowNewPost(false);
     setPendingOpenId(docId);
@@ -77,9 +90,9 @@ export function App() {
             </svg>
           </button>
           <div className="header-brand">
-            <h1 className="logo">conspire</h1>
+            <h1 className="logo">{WORKSPACE.displayName}</h1>
             <span className="tagline">
-              {activeView === "all" ? "breathe together" : VIEW_FILTERS.find(f => f.key === activeView)?.label}
+              {activeView === "all" ? WORKSPACE.tagline : VIEW_FILTERS.find(f => f.key === activeView)?.label}
             </span>
           </div>
         </div>

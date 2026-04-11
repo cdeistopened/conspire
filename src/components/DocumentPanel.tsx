@@ -2,6 +2,16 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
+import { WORKSPACE } from "../workspace";
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  social_post: "Social Post",
+  short_form_video: "Short-Form Video",
+  blog_draft: "Blog / SEO",
+  podcast: "Podcast / YouTube",
+  newsletter: "Newsletter",
+  note: "Note",
+};
 
 const PROOF_BASE = import.meta.env.VITE_PROOF_URL || "https://www.proofeditor.ai";
 
@@ -306,18 +316,19 @@ export function DocumentPanel({ document, onClose }: Props) {
                 await updateDoc({ id: document._id, doc_type: e.target.value } as any);
               }}
             >
-              <option value="social_post">Social Post</option>
-              <option value="short_form_video">Short-Form Video</option>
-              <option value="podcast">Podcast / YouTube</option>
-              <option value="blog_draft">Blog / SEO</option>
-              <option value="newsletter">Newsletter</option>
-              <option value="note">Note</option>
+              {WORKSPACE.docTypes.map((dt) => (
+                <option key={dt} value={dt}>
+                  {DOC_TYPE_LABELS[dt] ?? dt}
+                </option>
+              ))}
             </select>
           </div>
           <div className="control-group control-group-col">
             <label>Platforms</label>
             <div className="platform-checkboxes">
-              {Object.entries(PLATFORM_CONFIG).map(([key, cfg]) => {
+              {WORKSPACE.platforms.map((key) => {
+                const cfg = PLATFORM_CONFIG[key];
+                if (!cfg) return null;
                 const isActive = document.tags?.includes(`platform:${key}`) || document.platform === key;
                 const postUrl = cfg.postUrl;
                 return (

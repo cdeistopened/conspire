@@ -1,0 +1,26 @@
+{
+  "name": "opened",
+  "displayName": "conspire",
+  "tagline": "breathe together",
+  "defaultAuthor": "Charlie",
+  "docTypes": [
+    "social_post",
+    "short_form_video",
+    "blog_draft",
+    "podcast",
+    "newsletter",
+    "note"
+  ],
+  "platforms": [
+    "x",
+    "linkedin",
+    "instagram",
+    "facebook",
+    "tiktok",
+    "substack",
+    "webflow",
+    "beehiiv",
+    "youtube"
+  ],
+  "scheduler": "manual"
+}

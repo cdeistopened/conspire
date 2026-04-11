@@ -1,0 +1,21 @@
+{
+  "name": "rlm",
+  "displayName": "Richard Louis Miller",
+  "tagline": "studio",
+  "defaultAuthor": "Richard",
+  "docTypes": [
+    "short_form_video",
+    "newsletter",
+    "podcast",
+    "social_post",
+    "note"
+  ],
+  "platforms": [
+    "instagram",
+    "tiktok",
+    "youtube",
+    "facebook",
+    "linkedin"
+  ],
+  "scheduler": "feedhive"
+}

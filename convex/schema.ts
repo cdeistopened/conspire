@@ -36,6 +36,10 @@ export default defineSchema({
       )
     ),
     author: v.string(),
+    // Workspace tag for multi-tenant filtering. Absent = legacy OpenEd doc
+    // (backfill treats undefined as "opened"). New docs always set this from
+    // the frontend's WORKSPACE.name, which in turn comes from VITE_WORKSPACE.
+    workspace: v.optional(v.string()),
     body: v.optional(v.string()),
     scheduled_date: v.optional(v.number()),
     published_date: v.optional(v.number()),
@@ -72,6 +76,7 @@ export default defineSchema({
       })
     ),
   })
+    .index("by_workspace", ["workspace"])
     .index("by_status", ["status"])
     .index("by_type", ["doc_type"])
     .index("by_platform", ["platform"])

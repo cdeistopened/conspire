@@ -32,15 +32,26 @@ const STATUS_VALIDATOR = v.union(
 );
 
 export const listByStatus = query({
-  args: { status: v.optional(STATUS_VALIDATOR) },
+  args: {
+    status: v.optional(STATUS_VALIDATOR),
+    workspace: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
-    if (args.status) {
-      return ctx.db
-        .query("documents")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .collect();
-    }
-    return ctx.db.query("documents").collect();
+    const base = args.status
+      ? await ctx.db
+          .query("documents")
+          .withIndex("by_status", (q) => q.eq("status", args.status!))
+          .collect()
+      : await ctx.db.query("documents").collect();
+
+    if (!args.workspace) return base;
+
+    // Legacy docs (created before workspace tagging) implicitly belong to
+    // the opened workspace — treat undefined as "opened" for back-compat.
+    return base.filter((d) => {
+      const w = d.workspace ?? "opened";
+      return w === args.workspace;
+    });
   },
 });
 
@@ -67,6 +78,7 @@ export const create = mutation({
     doc_type: DOC_TYPE_VALIDATOR,
     platform: v.optional(PLATFORM_VALIDATOR),
     author: v.string(),
+    workspace: v.optional(v.string()),
     body: v.optional(v.string()),
     source: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
@@ -124,6 +136,7 @@ export const update = mutation({
     thumbnail_type: v.optional(v.string()),
     meta_description: v.optional(v.string()),
     parent_id: v.optional(v.id("documents")),
+    workspace: v.optional(v.string()),
     title_variants: v.optional(v.array(v.string())),
     thumbnail_urls: v.optional(v.array(v.string())),
     transcript: v.optional(v.string()),
