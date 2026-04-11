@@ -880,6 +880,31 @@ body {
   color: var(--red) !important;
 }
 
+.panel-delete.armed {
+  background: var(--red, #b91c1c) !important;
+  color: white !important;
+  width: auto !important;
+  padding: var(--space-xs) var(--space-sm) !important;
+  animation: pulse-armed 0.6s ease-in-out infinite alternate;
+}
+
+.panel-delete.armed:hover {
+  background: #991b1b !important;
+  color: white !important;
+}
+
+.panel-delete-confirm {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@keyframes pulse-armed {
+  from { transform: scale(1); }
+  to { transform: scale(1.04); }
+}
+
 /* Expand/collapse button */
 .panel-expand {
   font-size: 0.85rem !important;

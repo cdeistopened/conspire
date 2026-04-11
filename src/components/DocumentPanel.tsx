@@ -77,6 +77,8 @@ export function DocumentPanel({ document, onClose }: Props) {
   const [childPickerOpen, setChildPickerOpen] = useState(false);
   const [childSearch, setChildSearch] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [deleteArmed, setDeleteArmed] = useState(false);
+  const deleteTimer = useRef<ReturnType<typeof setTimeout>>();
   // Upload progress: null idle, {target,percent} while uploading. Target is
   // "main" for the generic dropzone or "slot-N" for podcast thumbnail slots.
   const [uploadState, setUploadState] = useState<{ target: string; percent: number } | null>(null);
@@ -270,18 +272,32 @@ export function DocumentPanel({ document, onClose }: Props) {
               )}
             </button>
             <button
-              className="btn-ghost panel-delete"
+              className={`btn-ghost panel-delete ${deleteArmed ? "armed" : ""}`}
               onClick={async () => {
-                if (confirm("Delete this permanently?")) {
+                if (!deleteArmed) {
+                  setDeleteArmed(true);
+                  if (deleteTimer.current) clearTimeout(deleteTimer.current);
+                  deleteTimer.current = setTimeout(() => setDeleteArmed(false), 3000);
+                  return;
+                }
+                if (deleteTimer.current) clearTimeout(deleteTimer.current);
+                try {
                   await removeDoc({ id: document._id });
                   onClose();
+                } catch (err) {
+                  setDeleteArmed(false);
+                  alert(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
                 }
               }}
-              title="Delete"
+              title={deleteArmed ? "Click again to delete" : "Delete"}
             >
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4M12.67 4v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4" />
-              </svg>
+              {deleteArmed ? (
+                <span className="panel-delete-confirm">Confirm?</span>
+              ) : (
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4M12.67 4v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4" />
+                </svg>
+              )}
             </button>
             <button className="btn-ghost panel-close" onClick={onClose}>
               &times;
