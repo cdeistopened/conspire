@@ -72,6 +72,9 @@ export default defineSchema({
     zernio_scheduled_at: v.optional(v.number()),             // when we handed it to Zernio
     zernio_error: v.optional(v.string()),                    // last failure message, if any
 
+    // Review view: index of the user-picked variant from title_variants
+    chosen_variant_index: v.optional(v.number()),
+
     performance: v.optional(
       v.object({
         likes: v.optional(v.number()),

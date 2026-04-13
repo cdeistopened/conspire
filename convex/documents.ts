@@ -148,6 +148,7 @@ export const update = mutation({
     zernio_post_id: v.optional(v.string()),
     zernio_scheduled_at: v.optional(v.number()),
     zernio_error: v.optional(v.string()),
+    chosen_variant_index: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

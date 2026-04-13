@@ -4,8 +4,16 @@ import { api } from "../convex/_generated/api";
 import { KanbanBoard } from "./components/KanbanBoard";
 import { NewPostModal } from "./components/NewPostModal";
 import { DocumentPanel } from "./components/DocumentPanel";
+import { ReviewView } from "./components/ReviewView";
 import type { Doc, Id } from "../convex/_generated/dataModel";
 import { WORKSPACE } from "./workspace";
+
+// Read view mode from URL: ?view=review activates the vertical review board
+function readViewMode(): "kanban" | "review" {
+  if (typeof window === "undefined") return "kanban";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("view") === "review" ? "review" : "kanban";
+}
 
 type ViewFilter = "all" | "social" | "video" | "podcast" | "blog" | "newsletter";
 
@@ -35,6 +43,7 @@ export function App() {
   const [showNav, setShowNav] = useState(false);
   const [activeView, setActiveView] = useState<ViewFilter>("all");
   const [pendingOpenId, setPendingOpenId] = useState<Id<"documents"> | null>(null);
+  const [viewMode, setViewMode] = useState<"kanban" | "review">(readViewMode());
   const documents = useQuery(api.documents.listByStatus, { workspace: WORKSPACE.name });
   const createDocument = useMutation(api.documents.create);
 
@@ -97,6 +106,20 @@ export function App() {
           </div>
         </div>
         <div className="header-actions">
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              const next = viewMode === "review" ? "kanban" : "review";
+              setViewMode(next);
+              const url = new URL(window.location.href);
+              if (next === "review") url.searchParams.set("view", "review");
+              else url.searchParams.delete("view");
+              window.history.replaceState({}, "", url.toString());
+            }}
+            title="Toggle review mode"
+          >
+            {viewMode === "review" ? "Kanban" : "Review"}
+          </button>
           <button className="btn-primary" onClick={() => setShowNewPost(true)}>
             + New
           </button>
@@ -129,10 +152,21 @@ export function App() {
       )}
 
       <main className="main">
-        <KanbanBoard
-          documents={filteredDocuments}
-          onCardClick={handleCardClick}
-        />
+        {viewMode === "review" ? (
+          <ReviewView
+            onExit={() => {
+              setViewMode("kanban");
+              const url = new URL(window.location.href);
+              url.searchParams.delete("view");
+              window.history.replaceState({}, "", url.toString());
+            }}
+          />
+        ) : (
+          <KanbanBoard
+            documents={filteredDocuments}
+            onCardClick={handleCardClick}
+          />
+        )}
       </main>
 
       {showNewPost && (
