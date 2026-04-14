@@ -209,6 +209,12 @@ body {
   margin-bottom: var(--space-sm);
 }
 
+.nav-section-label-spacer {
+  margin-top: var(--space-lg, 18px);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--gray-200);
+}
+
 .nav-item {
   display: flex;
   align-items: center;

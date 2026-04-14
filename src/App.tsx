@@ -133,9 +133,15 @@ export function App() {
             {VIEW_FILTERS.map((f) => (
               <button
                 key={f.key}
-                className={`nav-item ${activeView === f.key ? "active" : ""}`}
+                className={`nav-item ${activeView === f.key && viewMode === "kanban" ? "active" : ""}`}
                 onClick={() => {
                   setActiveView(f.key);
+                  if (viewMode === "review") {
+                    setViewMode("kanban");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("view");
+                    window.history.replaceState({}, "", url.toString());
+                  }
                   setShowNav(false);
                 }}
               >
@@ -147,6 +153,34 @@ export function App() {
                 </span>
               </button>
             ))}
+            <div className="nav-section-label nav-section-label-spacer">Modes</div>
+            <button
+              className={`nav-item ${viewMode === "kanban" ? "active" : ""}`}
+              onClick={() => {
+                setViewMode("kanban");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("view");
+                window.history.replaceState({}, "", url.toString());
+                setShowNav(false);
+              }}
+            >
+              Kanban
+            </button>
+            <button
+              className={`nav-item ${viewMode === "review" ? "active" : ""}`}
+              onClick={() => {
+                setViewMode("review");
+                const url = new URL(window.location.href);
+                url.searchParams.set("view", "review");
+                window.history.replaceState({}, "", url.toString());
+                setShowNav(false);
+              }}
+            >
+              Review board
+              <span className="nav-count">
+                {documents?.filter((d) => d.doc_type === "short_form_video").length ?? 0}
+              </span>
+            </button>
           </div>
         </nav>
       )}
