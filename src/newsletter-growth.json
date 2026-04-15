@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-04-15",
+  "source": "OpenEd Vault/Studio/Analytics & Attribution/reports/newsletter-state-of-play-20260414/",
+  "note": "Monthly rows have full program-interest totals (opted + non-opted). Weekly rows have opt-in counts only; weekly total submissions not yet pulled.",
+  "monthly": [
+    {"period": "2025-09", "program_total": 1223, "program_opted_in": 880,  "direct_newsletter": 455},
+    {"period": "2025-10", "program_total": 1626, "program_opted_in": 1245, "direct_newsletter": 134},
+    {"period": "2025-11", "program_total": 1436, "program_opted_in": 1043, "direct_newsletter": 88},
+    {"period": "2025-12", "program_total": 603,  "program_opted_in": 421,  "direct_newsletter": 92},
+    {"period": "2026-01", "program_total": 1118, "program_opted_in": 782,  "direct_newsletter": 135},
+    {"period": "2026-02", "program_total": 1993, "program_opted_in": 1329, "direct_newsletter": 106},
+    {"period": "2026-03", "program_total": 2522, "program_opted_in": 1872, "direct_newsletter": 117},
+    {"period": "2026-04", "program_total": 1842, "program_opted_in": 1320, "direct_newsletter": 73, "partial": true}
+  ],
+  "weekly": [
+    {"period": "2025-W51", "program_opted_in": 86,  "direct_newsletter": 17},
+    {"period": "2025-W52", "program_opted_in": 59,  "direct_newsletter": 7},
+    {"period": "2026-W01", "program_opted_in": 74,  "direct_newsletter": 16},
+    {"period": "2026-W02", "program_opted_in": 176, "direct_newsletter": 51},
+    {"period": "2026-W03", "program_opted_in": 182, "direct_newsletter": 24},
+    {"period": "2026-W04", "program_opted_in": 188, "direct_newsletter": 37},
+    {"period": "2026-W05", "program_opted_in": 212, "direct_newsletter": 15},
+    {"period": "2026-W06", "program_opted_in": 238, "direct_newsletter": 18},
+    {"period": "2026-W07", "program_opted_in": 313, "direct_newsletter": 33},
+    {"period": "2026-W08", "program_opted_in": 408, "direct_newsletter": 29},
+    {"period": "2026-W09", "program_opted_in": 391, "direct_newsletter": 31},
+    {"period": "2026-W10", "program_opted_in": 371, "direct_newsletter": 28},
+    {"period": "2026-W11", "program_opted_in": 402, "direct_newsletter": 16},
+    {"period": "2026-W12", "program_opted_in": 538, "direct_newsletter": 25},
+    {"period": "2026-W13", "program_opted_in": 384, "direct_newsletter": 28},
+    {"period": "2026-W14", "program_opted_in": 553, "direct_newsletter": 34},
+    {"period": "2026-W15", "program_opted_in": 774, "direct_newsletter": 37},
+    {"period": "2026-W16", "program_opted_in": 102, "direct_newsletter": 15, "partial": true}
+  ]
+}
