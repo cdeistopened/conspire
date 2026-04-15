@@ -1,4 +1,5 @@
 import { useMutation } from "convex/react";
+import { Virtuoso } from "react-virtuoso";
 import { api } from "../../convex/_generated/api";
 import { KanbanCard } from "./KanbanCard";
 import type { Doc } from "../../convex/_generated/dataModel";
@@ -14,9 +15,10 @@ const COLUMNS = [
 interface Props {
   documents: Doc<"documents">[];
   onCardClick: (doc: Doc<"documents">) => void;
+  childCounts?: Record<string, number>;
 }
 
-export function KanbanBoard({ documents, onCardClick }: Props) {
+export function KanbanBoard({ documents, onCardClick, childCounts = {} }: Props) {
   const updateStatus = useMutation(api.documents.updateStatus);
 
   const handleDrop = async (
@@ -71,9 +73,18 @@ export function KanbanBoard({ documents, onCardClick }: Props) {
               {columnDocs.length === 0 ? (
                 <div className="column-empty">{col.emptyMsg}</div>
               ) : (
-                columnDocs.map((doc) => (
-                  <KanbanCard key={doc._id} document={doc} onClick={() => onCardClick(doc)} />
-                ))
+                <Virtuoso
+                  style={{ height: "100%" }}
+                  data={columnDocs}
+                  itemContent={(_index, doc) => (
+                    <KanbanCard
+                      document={doc}
+                      onClick={() => onCardClick(doc)}
+                      childCount={childCounts[doc._id] ?? 0}
+                    />
+                  )}
+                  computeItemKey={(_index, doc) => doc._id}
+                />
               )}
             </div>
           </div>

@@ -65,6 +65,26 @@ export const listByParent = query({
   },
 });
 
+// Batch child count lookup — replaces the per-card listByParent query.
+// One round trip returns a { parentId → count } map for every doc in a
+// workspace. Scales to thousands of docs because it's a single indexed scan.
+export const childCountsByParent = query({
+  args: { workspace: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("documents").collect();
+    const scoped = args.workspace
+      ? all.filter((d) => (d.workspace ?? "opened") === args.workspace)
+      : all;
+    const counts: Record<string, number> = {};
+    for (const d of scoped) {
+      if (d.parent_id) {
+        counts[d.parent_id] = (counts[d.parent_id] ?? 0) + 1;
+      }
+    }
+    return counts;
+  },
+});
+
 export const get = query({
   args: { id: v.id("documents") },
   handler: async (ctx, args) => {
@@ -149,6 +169,7 @@ export const update = mutation({
     zernio_scheduled_at: v.optional(v.number()),
     zernio_error: v.optional(v.string()),
     chosen_variant_index: v.optional(v.number()),
+    notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

@@ -2346,3 +2346,317 @@ body {
   background: var(--gold-glow);
   color: var(--charcoal);
 }
+
+/* ═══════════════════════════════════════════
+   Bucket View — pillar-grouped library browser
+   ═══════════════════════════════════════════ */
+
+.bucket-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.bucket-filter-bar {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: var(--cream-2, #F5F0E8);
+  border-bottom: 1px solid var(--gray-200, #E8E2D5);
+  flex-wrap: wrap;
+}
+
+.bucket-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.bucket-filter-group label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-600, #7B7263);
+  font-weight: 600;
+}
+
+.bucket-filter-search {
+  width: 260px;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--gray-300, #D4CEC4);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: white;
+}
+
+.bucket-filter-group select {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--gray-300, #D4CEC4);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+}
+
+.bucket-filter-checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 0.35rem;
+  text-transform: none !important;
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  color: var(--charcoal, #1E1E1E) !important;
+  letter-spacing: normal !important;
+  cursor: pointer;
+}
+
+.bucket-filter-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.bucket-filter-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--gray-600, #7B7263);
+  font-variant-numeric: tabular-nums;
+}
+
+.bucket-grid {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.bucket-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-600, #7B7263);
+  font-size: 0.95rem;
+  padding: 3rem;
+}
+
+.bucket-column {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream-2, #F5F0E8);
+  border-radius: 8px;
+  min-height: 0;
+  max-height: 100%;
+  border: 1px solid var(--gray-200, #E8E2D5);
+}
+
+.bucket-column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--gray-200, #E8E2D5);
+  flex-shrink: 0;
+}
+
+.bucket-column-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bucket-column-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--charcoal, #1E1E1E);
+  flex: 1;
+}
+
+.bucket-column-count {
+  font-size: 0.75rem;
+  color: var(--gray-600, #7B7263);
+  font-variant-numeric: tabular-nums;
+  background: var(--cream, #FAF6EF);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--gray-200, #E8E2D5);
+}
+
+.bucket-column-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════
+   Bucket Card
+   ═══════════════════════════════════════════ */
+
+.bucket-card {
+  background: white;
+  border: 1px solid var(--gray-200, #E8E2D5);
+  border-radius: 6px;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+  font-size: 0.85rem;
+}
+
+.bucket-card:hover {
+  border-color: var(--gold, #C8943E);
+  box-shadow: 0 2px 6px rgba(200, 148, 62, 0.12);
+  transform: translateY(-1px);
+}
+
+.bucket-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.bucket-card-title {
+  flex: 1;
+  font-weight: 600;
+  color: var(--charcoal, #1E1E1E);
+  line-height: 1.3;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bucket-card-flags {
+  display: flex;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.bucket-flag {
+  opacity: 0.75;
+}
+
+.bucket-card-summary {
+  font-size: 0.78rem;
+  color: var(--gray-600, #7B7263);
+  line-height: 1.4;
+  margin: 0 0 0.5rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bucket-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.bucket-chip {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.45rem;
+  background: var(--cream-2, #F5F0E8);
+  color: var(--gray-700, #5C5449);
+  border-radius: 10px;
+  border: 1px solid var(--gray-200, #E8E2D5);
+}
+
+.bucket-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--gray-100, #F0ECE3);
+  margin-top: 0.2rem;
+}
+
+.bucket-card-status {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.status-draft { background: #FEF3C7; color: #92400E; }
+.status-review { background: #E0E7FF; color: #3730A3; }
+.status-approved { background: #D1FAE5; color: #065F46; }
+.status-scheduled { background: #DBEAFE; color: #1E40AF; }
+.status-posted { background: #F3F4F6; color: #374151; }
+.status-archived { background: #FEE2E2; color: #991B1B; }
+
+.bucket-notes-toggle {
+  background: none;
+  border: 1px solid var(--gray-200, #E8E2D5);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--gray-600, #7B7263);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.bucket-notes-toggle:hover {
+  border-color: var(--gold, #C8943E);
+  color: var(--gold, #C8943E);
+}
+
+.bucket-notes-toggle.has-notes {
+  background: var(--cream-2, #F5F0E8);
+  border-color: var(--gold, #C8943E);
+}
+
+.bucket-notes-area {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--gray-200, #E8E2D5);
+}
+
+.bucket-notes-area textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  border: 1px solid var(--gray-200, #E8E2D5);
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 60px;
+  background: var(--cream, #FAF6EF);
+  color: var(--charcoal, #1E1E1E);
+}
+
+.bucket-notes-area textarea:focus {
+  outline: none;
+  border-color: var(--gold, #C8943E);
+  background: white;
+}
+
+.bucket-notes-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.bucket-notes-status {
+  font-size: 0.7rem;
+  color: var(--gray-500, #9B9285);
+  font-style: italic;
+}

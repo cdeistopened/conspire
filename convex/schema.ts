@@ -75,6 +75,11 @@ export default defineSchema({
     // Review view: index of the user-picked variant from title_variants
     chosen_variant_index: v.optional(v.number()),
 
+    // Bucket view: free-form notes the user types while browsing the library.
+    // Orthogonal to tags/pillars — used for observations like "use in anxiety
+    // thread" or "needs cold-open re-cut". Searchable in the Bucket filter bar.
+    notes: v.optional(v.string()),
+
     performance: v.optional(
       v.object({
         likes: v.optional(v.number()),

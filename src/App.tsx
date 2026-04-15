@@ -5,14 +5,22 @@ import { KanbanBoard } from "./components/KanbanBoard";
 import { NewPostModal } from "./components/NewPostModal";
 import { DocumentPanel } from "./components/DocumentPanel";
 import { ReviewView } from "./components/ReviewView";
+import { AudienceScorecard } from "./components/AudienceScorecard";
+import { BucketView } from "./components/BucketView";
 import type { Doc, Id } from "../convex/_generated/dataModel";
 import { WORKSPACE } from "./workspace";
 
-// Read view mode from URL: ?view=review activates the vertical review board
-function readViewMode(): "kanban" | "review" {
+type ViewMode = "kanban" | "review" | "scorecard" | "bucket";
+
+// Read view mode from URL: ?view=review / ?view=scorecard / ?view=bucket
+function readViewMode(): ViewMode {
   if (typeof window === "undefined") return "kanban";
   const params = new URLSearchParams(window.location.search);
-  return params.get("view") === "review" ? "review" : "kanban";
+  const v = params.get("view");
+  if (v === "review") return "review";
+  if (v === "scorecard") return "scorecard";
+  if (v === "bucket") return "bucket";
+  return "kanban";
 }
 
 type ViewFilter = "all" | "social" | "video" | "podcast" | "blog" | "newsletter";
@@ -43,8 +51,9 @@ export function App() {
   const [showNav, setShowNav] = useState(false);
   const [activeView, setActiveView] = useState<ViewFilter>("all");
   const [pendingOpenId, setPendingOpenId] = useState<Id<"documents"> | null>(null);
-  const [viewMode, setViewMode] = useState<"kanban" | "review">(readViewMode());
+  const [viewMode, setViewMode] = useState<ViewMode>(readViewMode());
   const documents = useQuery(api.documents.listByStatus, { workspace: WORKSPACE.name });
+  const childCounts = useQuery(api.documents.childCountsByParent, { workspace: WORKSPACE.name });
   const createDocument = useMutation(api.documents.create);
 
   // Auto-open newly created doc once Convex delivers it
@@ -181,6 +190,33 @@ export function App() {
                 {documents?.filter((d) => d.doc_type === "short_form_video").length ?? 0}
               </span>
             </button>
+            {WORKSPACE.name === "opened" && (
+              <button
+                className={`nav-item ${viewMode === "scorecard" ? "active" : ""}`}
+                onClick={() => {
+                  setViewMode("scorecard");
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("view", "scorecard");
+                  window.history.replaceState({}, "", url.toString());
+                  setShowNav(false);
+                }}
+              >
+                Audience Scorecard
+              </button>
+            )}
+            <button
+              className={`nav-item ${viewMode === "bucket" ? "active" : ""}`}
+              onClick={() => {
+                setViewMode("bucket");
+                const url = new URL(window.location.href);
+                url.searchParams.set("view", "bucket");
+                window.history.replaceState({}, "", url.toString());
+                setShowNav(false);
+              }}
+            >
+              Bucket view
+              <span className="nav-count">{documents?.length ?? 0}</span>
+            </button>
           </div>
         </nav>
       )}
@@ -195,10 +231,18 @@ export function App() {
               window.history.replaceState({}, "", url.toString());
             }}
           />
+        ) : viewMode === "scorecard" ? (
+          <AudienceScorecard />
+        ) : viewMode === "bucket" ? (
+          <BucketView
+            documents={documents ?? []}
+            onCardClick={handleCardClick}
+          />
         ) : (
           <KanbanBoard
             documents={filteredDocuments}
             onCardClick={handleCardClick}
+            childCounts={childCounts ?? {}}
           />
         )}
       </main>

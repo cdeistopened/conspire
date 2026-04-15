@@ -1,5 +1,3 @@
-import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
 import type { Doc } from "../../convex/_generated/dataModel";
 
 const PLATFORM_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
@@ -28,11 +26,10 @@ function timeAgo(ts: number): string {
 interface Props {
   document: Doc<"documents">;
   onClick: () => void;
+  childCount?: number;
 }
 
-export function KanbanCard({ document, onClick }: Props) {
-  const children = useQuery(api.documents.listByParent, { parent_id: document._id });
-  const childCount = children?.length ?? 0;
+export function KanbanCard({ document, onClick, childCount = 0 }: Props) {
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("text/plain", document._id);
