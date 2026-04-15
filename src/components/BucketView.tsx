@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Virtuoso } from "react-virtuoso";
 import { BucketCard } from "./BucketCard";
 import type { Doc } from "../../convex/_generated/dataModel";
 
@@ -34,6 +33,21 @@ const PILLAR_LABELS: Record<string, string> = {
   "unclassified": "Unclassified",
 };
 
+const PILLAR_DESCRIPTIONS: Record<string, string> = {
+  "mind-mastery": "Self-talk, thought control, rumination, reframing",
+  "emotion-regulation": "Anxiety, anger, fear, grief, sadness, shame",
+  "presence-letting-go": "Being in the now, meditation, acceptance, conscious breathing",
+  "body": "Nutrition, sleep, exercise, physical health",
+  "relationships": "Isolation, marriage, communication, forgiveness, trust",
+  "aging-with-purpose": "Longevity, wisdom of years, intentional age as authority",
+  "purpose-meaning": "Calling, values, service, contribution",
+  "habits": "Morning routines, journaling, daily practices, screens",
+  "psychedelics-healing": "Medicine journeys, psychedelic therapy, integration",
+  "crisis-response": "Illness, loss, trauma, adversity, resilience",
+  "therapy-process": "Psychotherapy as practice, therapist-patient dynamics",
+  "unclassified": "Clips without a primary pillar yet",
+};
+
 const PILLAR_COLORS: Record<string, string> = {
   "mind-mastery": "#C8943E",
   "emotion-regulation": "#D65C5C",
@@ -55,8 +69,7 @@ function extractPillar(doc: Doc<"documents">): string {
 }
 
 interface Filters {
-  pillar: string; // "all" or specific pillar slug
-  status: string; // "all" or specific status
+  status: string;
   hideAgeMention: boolean;
   hideNotRichard: boolean;
   hidePromo: boolean;
@@ -64,7 +77,6 @@ interface Filters {
 }
 
 const DEFAULT_FILTERS: Filters = {
-  pillar: "all",
   status: "all",
   hideAgeMention: false,
   hideNotRichard: true,
@@ -73,20 +85,29 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 const FILTERS_KEY = "conspire_bucket_filters";
+const PAGE_SIZE = 10;
 
 function loadFilters(): Filters {
   if (typeof window === "undefined") return DEFAULT_FILTERS;
-  // URL params override localStorage
-  const params = new URLSearchParams(window.location.search);
-  const fromUrl: Partial<Filters> = {};
-  if (params.get("pillar")) fromUrl.pillar = params.get("pillar")!;
-  if (params.get("status")) fromUrl.status = params.get("status")!;
-  if (params.get("q")) fromUrl.search = params.get("q")!;
   try {
     const saved = localStorage.getItem(FILTERS_KEY);
-    if (saved) return { ...DEFAULT_FILTERS, ...JSON.parse(saved), ...fromUrl };
+    if (saved) return { ...DEFAULT_FILTERS, ...JSON.parse(saved) };
   } catch {}
-  return { ...DEFAULT_FILTERS, ...fromUrl };
+  return DEFAULT_FILTERS;
+}
+
+function readPillarFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("pillar");
+}
+
+function setPillarInUrl(pillar: string | null) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (pillar) url.searchParams.set("pillar", pillar);
+  else url.searchParams.delete("pillar");
+  window.history.replaceState({}, "", url.toString());
 }
 
 interface Props {
@@ -96,15 +117,25 @@ interface Props {
 
 export function BucketView({ documents, onCardClick }: Props) {
   const [filters, setFilters] = useState<Filters>(() => loadFilters());
+  const [selectedPillar, setSelectedPillar] = useState<string | null>(() =>
+    readPillarFromUrl()
+  );
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // Persist filters to localStorage whenever they change
+  // Persist filters
   useEffect(() => {
     try {
       localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
     } catch {}
   }, [filters]);
 
-  // Apply filters to the full document set
+  // Sync pillar selection to URL
+  useEffect(() => {
+    setPillarInUrl(selectedPillar);
+    setVisibleCount(PAGE_SIZE); // reset pagination when switching pillars
+  }, [selectedPillar]);
+
+  // Filters applied to the full document set
   const filteredDocs = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
     return documents.filter((d) => {
@@ -113,10 +144,6 @@ export function BucketView({ documents, onCardClick }: Props) {
       if (filters.hideAgeMention && tags.includes("flag:age-mention")) return false;
       if (filters.hideNotRichard && tags.includes("flag:not-richard")) return false;
       if (filters.hidePromo && tags.includes("flag:promo")) return false;
-      if (filters.pillar !== "all") {
-        const pillar = extractPillar(d);
-        if (pillar !== filters.pillar) return false;
-      }
       if (q) {
         const hay = (
           (d.title ?? "") +
@@ -131,24 +158,23 @@ export function BucketView({ documents, onCardClick }: Props) {
     });
   }, [documents, filters]);
 
-  // Group by pillar
-  const buckets = useMemo(() => {
-    const groups = new Map<string, Doc<"documents">[]>();
+  // Pillar counts (post-filter)
+  const pillarCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
     for (const doc of filteredDocs) {
-      const pillar = extractPillar(doc);
-      if (!groups.has(pillar)) groups.set(pillar, []);
-      groups.get(pillar)!.push(doc);
+      const p = extractPillar(doc);
+      counts[p] = (counts[p] ?? 0) + 1;
     }
-    // Order: canonical pillar order, then unclassified, skipping empty buckets
-    const ordered: Array<[string, Doc<"documents">[]]> = [];
-    for (const p of PILLAR_ORDER) {
-      if (groups.has(p)) ordered.push([p, groups.get(p)!]);
-    }
-    if (groups.has("unclassified")) {
-      ordered.push(["unclassified", groups.get("unclassified")!]);
-    }
-    return ordered;
+    return counts;
   }, [filteredDocs]);
+
+  // In detail mode, list the docs for the selected pillar
+  const pillarDocs = useMemo(() => {
+    if (!selectedPillar) return [];
+    return filteredDocs
+      .filter((d) => extractPillar(d) === selectedPillar)
+      .sort((a, b) => b._creationTime - a._creationTime);
+  }, [filteredDocs, selectedPillar]);
 
   const totalShown = filteredDocs.length;
   const totalAll = documents.length;
@@ -160,53 +186,146 @@ export function BucketView({ documents, onCardClick }: Props) {
         setFilters={setFilters}
         totalShown={totalShown}
         totalAll={totalAll}
+        selectedPillar={selectedPillar}
+        onBack={() => setSelectedPillar(null)}
       />
-      <div className="bucket-grid">
-        {buckets.length === 0 ? (
-          <div className="bucket-empty">
-            No clips match the current filters. Try relaxing them.
-          </div>
-        ) : (
-          buckets.map(([pillar, docs]) => (
-            <div key={pillar} className="bucket-column">
-              <div className="bucket-column-header">
-                <span
-                  className="bucket-column-dot"
-                  style={{ backgroundColor: PILLAR_COLORS[pillar] ?? "#888" }}
-                />
-                <h2 className="bucket-column-title">
-                  {PILLAR_LABELS[pillar] ?? pillar}
-                </h2>
-                <span className="bucket-column-count">{docs.length}</span>
-              </div>
-              <div className="bucket-column-body">
-                <Virtuoso
-                  style={{ height: "100%" }}
-                  data={docs}
-                  itemContent={(_index, doc) => (
-                    <BucketCard document={doc} onClick={() => onCardClick(doc)} />
-                  )}
-                  computeItemKey={(_index, doc) => doc._id}
-                />
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      {selectedPillar ? (
+        <BucketDetail
+          pillar={selectedPillar}
+          docs={pillarDocs}
+          visibleCount={visibleCount}
+          onLoadMore={() => setVisibleCount((v) => v + PAGE_SIZE)}
+          onCardClick={onCardClick}
+        />
+      ) : (
+        <BucketIndex
+          pillarCounts={pillarCounts}
+          onSelect={setSelectedPillar}
+        />
+      )}
     </div>
   );
 }
+
+// ── Index view: 11 pillar tiles ─────────────────────────────────────
+
+interface IndexProps {
+  pillarCounts: Record<string, number>;
+  onSelect: (pillar: string) => void;
+}
+
+function BucketIndex({ pillarCounts, onSelect }: IndexProps) {
+  // Include all canonical pillars (even if empty) + unclassified if any
+  const tiles = [
+    ...PILLAR_ORDER.map((p) => ({ pillar: p, count: pillarCounts[p] ?? 0 })),
+    ...(pillarCounts["unclassified"]
+      ? [{ pillar: "unclassified", count: pillarCounts["unclassified"] }]
+      : []),
+  ];
+
+  return (
+    <div className="bucket-index">
+      {tiles.map(({ pillar, count }) => (
+        <button
+          key={pillar}
+          className="bucket-tile"
+          onClick={() => onSelect(pillar)}
+          disabled={count === 0}
+          style={{ "--tile-accent": PILLAR_COLORS[pillar] ?? "#888" } as React.CSSProperties}
+        >
+          <div className="bucket-tile-header">
+            <span className="bucket-tile-dot" />
+            <h2 className="bucket-tile-title">{PILLAR_LABELS[pillar] ?? pillar}</h2>
+            <span className="bucket-tile-count">{count}</span>
+          </div>
+          <p className="bucket-tile-description">
+            {PILLAR_DESCRIPTIONS[pillar] ?? ""}
+          </p>
+          <div className="bucket-tile-cta">
+            {count === 0 ? "(empty)" : `Browse ${count} clip${count === 1 ? "" : "s"} →`}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Detail view: paginated list for one pillar ──────────────────────
+
+interface DetailProps {
+  pillar: string;
+  docs: Doc<"documents">[];
+  visibleCount: number;
+  onLoadMore: () => void;
+  onCardClick: (doc: Doc<"documents">) => void;
+}
+
+function BucketDetail({ pillar, docs, visibleCount, onLoadMore, onCardClick }: DetailProps) {
+  const visible = docs.slice(0, visibleCount);
+  const hasMore = visibleCount < docs.length;
+
+  return (
+    <div className="bucket-detail">
+      <div className="bucket-detail-header">
+        <span
+          className="bucket-detail-dot"
+          style={{ backgroundColor: PILLAR_COLORS[pillar] ?? "#888" }}
+        />
+        <h2 className="bucket-detail-title">{PILLAR_LABELS[pillar] ?? pillar}</h2>
+        <span className="bucket-detail-count">
+          {visible.length} of {docs.length}
+        </span>
+      </div>
+      {docs.length === 0 ? (
+        <div className="bucket-detail-empty">
+          No clips in this pillar match the current filters.
+        </div>
+      ) : (
+        <div className="bucket-detail-list">
+          {visible.map((doc) => (
+            <BucketCard
+              key={doc._id}
+              document={doc}
+              onClick={() => onCardClick(doc)}
+            />
+          ))}
+          {hasMore && (
+            <button className="bucket-load-more" onClick={onLoadMore}>
+              Show {Math.min(PAGE_SIZE, docs.length - visibleCount)} more ({docs.length - visibleCount} remaining)
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Filter bar ──────────────────────────────────────────────────────
 
 interface FilterBarProps {
   filters: Filters;
   setFilters: (f: Filters) => void;
   totalShown: number;
   totalAll: number;
+  selectedPillar: string | null;
+  onBack: () => void;
 }
 
-function BucketFilterBar({ filters, setFilters, totalShown, totalAll }: FilterBarProps) {
+function BucketFilterBar({
+  filters,
+  setFilters,
+  totalShown,
+  totalAll,
+  selectedPillar,
+  onBack,
+}: FilterBarProps) {
   return (
     <div className="bucket-filter-bar">
+      {selectedPillar && (
+        <button className="bucket-back-btn" onClick={onBack} title="Back to all pillars">
+          ← All pillars
+        </button>
+      )}
       <div className="bucket-filter-group">
         <input
           type="text"
@@ -215,21 +334,6 @@ function BucketFilterBar({ filters, setFilters, totalShown, totalAll }: FilterBa
           onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           className="bucket-filter-search"
         />
-      </div>
-      <div className="bucket-filter-group">
-        <label>Pillar</label>
-        <select
-          value={filters.pillar}
-          onChange={(e) => setFilters({ ...filters, pillar: e.target.value })}
-        >
-          <option value="all">All</option>
-          {PILLAR_ORDER.map((p) => (
-            <option key={p} value={p}>
-              {PILLAR_LABELS[p]}
-            </option>
-          ))}
-          <option value="unclassified">Unclassified</option>
-        </select>
       </div>
       <div className="bucket-filter-group">
         <label>Status</label>
