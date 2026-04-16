@@ -36,8 +36,6 @@ export interface WorkspaceConfig {
   pin?: string;
 }
 
-export const ALL_WORKSPACES = configs;
-
 export function switchWorkspace(key: string) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem("conspire_workspace", key);
@@ -67,6 +65,8 @@ const configs: Record<string, WorkspaceConfig> = {
   opened: openedConfig as WorkspaceConfig,
   rlm: rlmConfig as WorkspaceConfig,
 };
+
+export const ALL_WORKSPACES = configs;
 
 // Workspace resolution:
 //   1. URL query param `?workspace=rlm` wins (lets one Railway service view
