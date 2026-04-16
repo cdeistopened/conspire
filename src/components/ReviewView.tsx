@@ -46,9 +46,12 @@ function ReviewRow({
   updateDoc: ReturnType<typeof useMutation<typeof api.documents.update>>;
 }) {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
-  const variants = clip.title_variants ?? ["", "", "", "", ""];
-  // Pad to at least 5 slots
-  while (variants.length < 5) variants.push("");
+  // Adaptive: show at least 5 slots (for empty clips), or all provided
+  // variants if the clip has more (we now ship 7 archetype-tagged options).
+  const stored = clip.title_variants ?? [];
+  const slotCount = Math.max(5, stored.length);
+  const variants = [...stored];
+  while (variants.length < slotCount) variants.push("");
 
   const embedSrc = clip.descript_url
     ? clip.descript_url.replace("/view/", "/embed/")
@@ -103,7 +106,7 @@ function ReviewRow({
         <h3 className="review-clip-title">{clip.title}</h3>
         <div className="review-variants">
           <div className="review-variants-label">On-screen text variants</div>
-          {[0, 1, 2, 3, 4].map((i) => {
+          {Array.from({ length: slotCount }, (_, i) => i).map((i) => {
             const isPicked = clip.chosen_variant_index === i;
             return (
               <div key={i} className={`review-variant-row ${isPicked ? "picked" : ""}`}>
