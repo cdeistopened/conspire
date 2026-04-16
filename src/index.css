@@ -2753,3 +2753,83 @@ body {
   color: var(--gray-500, #9B9285);
   font-style: italic;
 }
+
+/* ── PIN gate ── */
+.pin-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--cream);
+}
+.pin-box {
+  text-align: center;
+  max-width: 280px;
+}
+.pin-brand {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 650;
+  color: var(--charcoal);
+  margin-bottom: 0.2rem;
+}
+.pin-tagline {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 1.5rem;
+}
+.pin-input {
+  width: 120px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  letter-spacing: 0.3em;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md, 8px);
+  background: white;
+  color: var(--charcoal);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.pin-input:focus {
+  border-color: var(--gold);
+}
+.pin-shake {
+  animation: shake 0.3s;
+  border-color: var(--red) !important;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-4px); }
+}
+.pin-switch {
+  margin-top: 2rem;
+}
+.pin-switch-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm, 4px);
+  transition: color 0.15s;
+}
+.pin-switch-btn:hover {
+  color: var(--gold);
+}
+
+/* Nav muted item */
+.nav-item-muted {
+  color: var(--gray-500);
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+}
+.nav-item-muted:hover {
+  color: var(--red);
+}

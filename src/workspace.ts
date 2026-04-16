@@ -32,6 +32,35 @@ export interface WorkspaceConfig {
   docTypes: DocType[];
   platforms: PlatformKey[];
   scheduler: "manual" | "zernio";
+  getlateProfileId?: string;
+  pin?: string;
+}
+
+export const ALL_WORKSPACES = configs;
+
+export function switchWorkspace(key: string) {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem("conspire_workspace", key);
+    window.localStorage.removeItem(`conspire_unlocked_${WORKSPACE.name}`);
+    const url = new URL(window.location.href);
+    url.searchParams.set("workspace", key);
+    url.search = `?workspace=${key}`;
+    window.location.href = url.toString();
+  }
+}
+
+export function isUnlocked(): boolean {
+  if (!WORKSPACE.pin) return true;
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(`conspire_unlocked_${WORKSPACE.name}`) === "yes";
+}
+
+export function unlock(pin: string): boolean {
+  if (pin === WORKSPACE.pin) {
+    window.localStorage.setItem(`conspire_unlocked_${WORKSPACE.name}`, "yes");
+    return true;
+  }
+  return false;
 }
 
 const configs: Record<string, WorkspaceConfig> = {

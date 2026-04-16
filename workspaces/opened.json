@@ -2,6 +2,7 @@
   "name": "opened",
   "displayName": "conspire",
   "tagline": "breathe together",
+  "pin": "2026",
   "defaultAuthor": "Charlie",
   "docTypes": [
     "social_post",
@@ -22,5 +23,6 @@
     "beehiiv",
     "youtube"
   ],
-  "scheduler": "manual"
+  "scheduler": "manual",
+  "getlateProfileId": "69612bd52bf2e80219c9bf06"
 }

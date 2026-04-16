@@ -8,7 +8,7 @@ import { ReviewView } from "./components/ReviewView";
 import { AudienceScorecard } from "./components/AudienceScorecard";
 import { BucketView } from "./components/BucketView";
 import type { Doc, Id } from "../convex/_generated/dataModel";
-import { WORKSPACE } from "./workspace";
+import { WORKSPACE, ALL_WORKSPACES, switchWorkspace, isUnlocked, unlock } from "./workspace";
 
 type ViewMode = "kanban" | "review" | "scorecard" | "bucket";
 
@@ -52,6 +52,51 @@ export function App() {
   const [activeView, setActiveView] = useState<ViewFilter>("all");
   const [pendingOpenId, setPendingOpenId] = useState<Id<"documents"> | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(readViewMode());
+  const [unlocked, setUnlocked] = useState(isUnlocked());
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+
+  if (!unlocked) {
+    return (
+      <div className="pin-gate">
+        <div className="pin-box">
+          <h1 className="pin-brand">{WORKSPACE.displayName}</h1>
+          <p className="pin-tagline">{WORKSPACE.tagline}</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (unlock(pinInput)) {
+              setUnlocked(true);
+            } else {
+              setPinError(true);
+              setPinInput("");
+              setTimeout(() => setPinError(false), 1500);
+            }
+          }}>
+            <input
+              className={`pin-input ${pinError ? "pin-shake" : ""}`}
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={8}
+              placeholder="PIN"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              autoFocus
+            />
+          </form>
+          <div className="pin-switch">
+            {Object.entries(ALL_WORKSPACES)
+              .filter(([k]) => k !== WORKSPACE.name)
+              .map(([key, ws]) => (
+                <button key={key} className="pin-switch-btn" onClick={() => switchWorkspace(key)}>
+                  {ws.displayName} &rarr;
+                </button>
+              ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   const documents = useQuery(api.documents.listByStatus, { workspace: WORKSPACE.name });
   const childCounts = useQuery(api.documents.childCountsByParent, { workspace: WORKSPACE.name });
   const createDocument = useMutation(api.documents.create);
@@ -216,6 +261,28 @@ export function App() {
             >
               Bucket view
               <span className="nav-count">{documents?.length ?? 0}</span>
+            </button>
+            <div className="nav-section-label nav-section-label-spacer">Workspace</div>
+            {Object.entries(ALL_WORKSPACES)
+              .filter(([k]) => k !== WORKSPACE.name)
+              .map(([key, ws]) => (
+                <button
+                  key={key}
+                  className="nav-item"
+                  onClick={() => switchWorkspace(key)}
+                >
+                  {ws.displayName} &rarr;
+                </button>
+              ))}
+            <button
+              className="nav-item nav-item-muted"
+              onClick={() => {
+                window.localStorage.removeItem(`conspire_unlocked_${WORKSPACE.name}`);
+                setUnlocked(false);
+                setShowNav(false);
+              }}
+            >
+              Lock workspace
             </button>
           </div>
         </nav>

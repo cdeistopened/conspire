@@ -2,6 +2,7 @@
   "name": "rlm",
   "displayName": "Richard Louis Miller",
   "tagline": "studio",
+  "pin": "1967",
   "defaultAuthor": "Richard",
   "docTypes": [
     "short_form_video",
@@ -17,5 +18,6 @@
     "facebook",
     "linkedin"
   ],
-  "scheduler": "zernio"
+  "scheduler": "zernio",
+  "getlateProfileId": "69dfe3533d02d9b217ba6d10"
 }
