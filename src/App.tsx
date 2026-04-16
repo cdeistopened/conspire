@@ -55,48 +55,6 @@ export function App() {
   const [unlocked, setUnlocked] = useState(isUnlocked());
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
-
-  if (!unlocked) {
-    return (
-      <div className="pin-gate">
-        <div className="pin-box">
-          <h1 className="pin-brand">{WORKSPACE.displayName}</h1>
-          <p className="pin-tagline">{WORKSPACE.tagline}</p>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            if (unlock(pinInput)) {
-              setUnlocked(true);
-            } else {
-              setPinError(true);
-              setPinInput("");
-              setTimeout(() => setPinError(false), 1500);
-            }
-          }}>
-            <input
-              className={`pin-input ${pinError ? "pin-shake" : ""}`}
-              type="password"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={8}
-              placeholder="PIN"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              autoFocus
-            />
-          </form>
-          <div className="pin-switch">
-            {Object.entries(ALL_WORKSPACES)
-              .filter(([k]) => k !== WORKSPACE.name)
-              .map(([key, ws]) => (
-                <button key={key} className="pin-switch-btn" onClick={() => switchWorkspace(key)}>
-                  {ws.displayName} &rarr;
-                </button>
-              ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
   const documents = useQuery(api.documents.listByStatus, { workspace: WORKSPACE.name });
   const childCounts = useQuery(api.documents.childCountsByParent, { workspace: WORKSPACE.name });
   const createDocument = useMutation(api.documents.create);
@@ -142,6 +100,48 @@ export function App() {
   const freshSelectedDoc = selectedDoc
     ? documents?.find((d) => d._id === selectedDoc._id) ?? selectedDoc
     : null;
+
+  if (!unlocked) {
+    return (
+      <div className="pin-gate">
+        <div className="pin-box">
+          <h1 className="pin-brand">{WORKSPACE.displayName}</h1>
+          <p className="pin-tagline">{WORKSPACE.tagline}</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (unlock(pinInput)) {
+              setUnlocked(true);
+            } else {
+              setPinError(true);
+              setPinInput("");
+              setTimeout(() => setPinError(false), 1500);
+            }
+          }}>
+            <input
+              className={`pin-input ${pinError ? "pin-shake" : ""}`}
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={8}
+              placeholder="PIN"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              autoFocus
+            />
+          </form>
+          <div className="pin-switch">
+            {Object.entries(ALL_WORKSPACES)
+              .filter(([k]) => k !== WORKSPACE.name)
+              .map(([key, ws]) => (
+                <button key={key} className="pin-switch-btn" onClick={() => switchWorkspace(key)}>
+                  {ws.displayName} &rarr;
+                </button>
+              ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
