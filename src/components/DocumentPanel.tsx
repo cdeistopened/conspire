@@ -732,29 +732,62 @@ export function DocumentPanel({ document, onClose }: Props) {
           </div>
         )}
 
-        {document.doc_type === "short_form_video" && (
+        {document.doc_type === "short_form_video" && (() => {
+          const storedVariants = document.title_variants ?? [];
+          const slotCount = Math.max(5, storedVariants.length);
+          return (
           <div className="panel-type-fields">
             <div className="type-fields-header">Short-Form Video</div>
 
             <div className="prop-field">
-              <label>On-screen text variants (5 to A/B test)</label>
-              {[0, 1, 2, 3, 4].map((i) => (
-                <input
-                  key={i}
-                  className="prop-input"
-                  type="text"
-                  placeholder={`Variant ${i + 1}...`}
-                  defaultValue={document.title_variants?.[i] ?? ""}
-                  onBlur={async (e) => {
-                    const val = e.target.value;
-                    const next = [...(document.title_variants ?? [])];
-                    while (next.length < 5) next.push("");
-                    if (next[i] === val) return;
-                    next[i] = val;
-                    await updateDoc({ id: document._id, title_variants: next });
-                  }}
-                />
-              ))}
+              <label>On-screen text variants ({slotCount} to A/B test · star in Review)</label>
+              {Array.from({ length: slotCount }, (_, i) => i).map((i) => {
+                const isPicked = document.chosen_variant_index === i;
+                return (
+                  <div key={i} className={`panel-variant-row ${isPicked ? "panel-variant-picked" : ""}`}>
+                    <button
+                      className={`panel-variant-star ${isPicked ? "picked" : ""}`}
+                      title={isPicked ? "Unpick" : "Pick this variant"}
+                      onClick={async () => {
+                        const nextIdx = document.chosen_variant_index === i ? undefined : i;
+                        await updateDoc({ id: document._id, chosen_variant_index: nextIdx });
+                      }}
+                    >
+                      {isPicked ? "★" : "☆"}
+                    </button>
+                    <input
+                      className="prop-input"
+                      type="text"
+                      placeholder={`Variant ${i + 1}...`}
+                      defaultValue={storedVariants[i] ?? ""}
+                      onBlur={async (e) => {
+                        const val = e.target.value;
+                        const next = [...storedVariants];
+                        while (next.length < slotCount) next.push("");
+                        if (next[i] === val) return;
+                        next[i] = val;
+                        await updateDoc({ id: document._id, title_variants: next });
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="prop-field">
+              <label>CTA / captions / notes (editable)</label>
+              <textarea
+                className="prop-input"
+                rows={8}
+                placeholder="End-card OST, per-platform captions, BREATHE CTA, or any scheduling notes..."
+                defaultValue={document.notes ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== (document.notes ?? "")) {
+                    await updateDoc({ id: document._id, notes: val || undefined });
+                  }
+                }}
+              />
             </div>
 
             {document.transcript && (
@@ -764,7 +797,8 @@ export function DocumentPanel({ document, onClose }: Props) {
               </div>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {/* Action bar */}
         <div className="panel-actions">

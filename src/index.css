@@ -1417,13 +1417,42 @@ body {
   margin-bottom: 4px;
 }
 
-.review-variant-row {
+.review-variant-row,
+.panel-variant-row {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   padding: 6px 8px;
   border-radius: var(--radius-sm);
   transition: background var(--duration-fast) var(--ease-out);
+}
+
+.panel-variant-row + .panel-variant-row {
+  margin-top: 4px;
+}
+
+.panel-variant-picked {
+  background: var(--gold-glow, rgba(200, 148, 62, 0.1));
+}
+
+.panel-variant-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--gray-300);
+  padding: 4px;
+  flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.panel-variant-star:hover {
+  color: var(--gold);
+}
+
+.panel-variant-star.picked {
+  color: var(--gold, #C8943E);
 }
 
 .review-variant-row.picked {
