@@ -46,27 +46,10 @@ function ReviewRow({
   updateDoc: ReturnType<typeof useMutation<typeof api.documents.update>>;
 }) {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
-  // Adaptive: show at least 5 slots (for empty clips), or all provided
-  // variants if the clip has more (we now ship 7 archetype-tagged options).
-  const stored = clip.title_variants ?? [];
-  const slotCount = Math.max(5, stored.length);
-  const variants = [...stored];
-  while (variants.length < slotCount) variants.push("");
 
   const embedSrc = clip.descript_url
     ? clip.descript_url.replace("/view/", "/embed/")
     : null;
-
-  const setVariant = async (i: number, value: string) => {
-    const next = [...variants];
-    next[i] = value;
-    await updateDoc({ id: clip._id, title_variants: next });
-  };
-
-  const togglePick = async (i: number) => {
-    const newIndex = clip.chosen_variant_index === i ? undefined : i;
-    await updateDoc({ id: clip._id, chosen_variant_index: newIndex });
-  };
 
   return (
     <div className="review-row">
@@ -104,36 +87,20 @@ function ReviewRow({
       </div>
       <div className="review-content-col">
         <h3 className="review-clip-title">{clip.title}</h3>
-        <div className="review-variants">
-          <div className="review-variants-label">On-screen text variants</div>
-          {Array.from({ length: slotCount }, (_, i) => i).map((i) => {
-            const isPicked = clip.chosen_variant_index === i;
-            return (
-              <div key={i} className={`review-variant-row ${isPicked ? "picked" : ""}`}>
-                <button
-                  className={`review-variant-star ${isPicked ? "picked" : ""}`}
-                  onClick={() => togglePick(i)}
-                  title={isPicked ? "Unpick" : "Pick this variant"}
-                >
-                  {isPicked ? "★" : "☆"}
-                </button>
-                <input
-                  className="review-variant-input"
-                  type="text"
-                  placeholder={`Variant ${i + 1}...`}
-                  defaultValue={variants[i] ?? ""}
-                  onBlur={(e) => {
-                    if (e.target.value !== (variants[i] ?? "")) {
-                      setVariant(i, e.target.value);
-                    }
-                  }}
-                />
-                <span className="review-variant-count">
-                  {(variants[i] ?? "").trim().split(/\s+/).filter(Boolean).length}w
-                </span>
-              </div>
-            );
-          })}
+        <div className="review-ost">
+          <div className="review-ost-label">On-screen text (prefix your pick with ★)</div>
+          <textarea
+            className="review-ost-textarea"
+            rows={12}
+            placeholder="★ your picked hook&#10;&#10;GOLDMAN-STYLE&#10;1. ..."
+            defaultValue={clip.notes ?? ""}
+            onBlur={async (e) => {
+              const val = e.target.value;
+              if (val !== (clip.notes ?? "")) {
+                await updateDoc({ id: clip._id, notes: val || undefined });
+              }
+            }}
+          />
         </div>
         <button
           className="review-transcript-toggle"

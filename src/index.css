@@ -1506,6 +1506,42 @@ body {
   text-align: right;
 }
 
+.review-ost {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.review-ost-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--gray-300);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.review-ost-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--charcoal);
+  resize: vertical;
+  min-height: 220px;
+}
+
+.review-ost-textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
 .review-transcript-toggle {
   font-family: var(--font-mono);
   font-size: 0.7rem;
