@@ -7,12 +7,13 @@ import { DocumentPanel } from "./components/DocumentPanel";
 import { ReviewView } from "./components/ReviewView";
 import { AudienceScorecard } from "./components/AudienceScorecard";
 import { BucketView } from "./components/BucketView";
+import { CourseView } from "./components/CourseView";
 import type { Doc, Id } from "../convex/_generated/dataModel";
 import { WORKSPACE, ALL_WORKSPACES, switchWorkspace, isUnlocked, unlock } from "./workspace";
 
-type ViewMode = "kanban" | "review" | "scorecard" | "bucket";
+type ViewMode = "kanban" | "review" | "scorecard" | "bucket" | "course";
 
-// Read view mode from URL: ?view=review / ?view=scorecard / ?view=bucket
+// Read view mode from URL: ?view=review / ?view=scorecard / ?view=bucket / ?view=course
 function readViewMode(): ViewMode {
   if (typeof window === "undefined") return "kanban";
   const params = new URLSearchParams(window.location.search);
@@ -20,6 +21,7 @@ function readViewMode(): ViewMode {
   if (v === "review") return "review";
   if (v === "scorecard") return "scorecard";
   if (v === "bucket") return "bucket";
+  if (v === "course") return "course";
   return "kanban";
 }
 
@@ -262,6 +264,20 @@ export function App() {
               Bucket view
               <span className="nav-count">{documents?.length ?? 0}</span>
             </button>
+            {WORKSPACE.name === "rlm" && (
+              <button
+                className={`nav-item ${viewMode === "course" ? "active" : ""}`}
+                onClick={() => {
+                  setViewMode("course");
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("view", "course");
+                  window.history.replaceState({}, "", url.toString());
+                  setShowNav(false);
+                }}
+              >
+                Course · Mind Mastery
+              </button>
+            )}
             <div className="nav-section-label nav-section-label-spacer">Workspace</div>
             {Object.entries(ALL_WORKSPACES)
               .filter(([k]) => k !== WORKSPACE.name)
@@ -305,6 +321,8 @@ export function App() {
             documents={documents ?? []}
             onCardClick={handleCardClick}
           />
+        ) : viewMode === "course" ? (
+          <CourseView />
         ) : (
           <KanbanBoard
             documents={filteredDocuments}
