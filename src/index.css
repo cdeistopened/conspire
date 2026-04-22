@@ -2922,6 +2922,30 @@ body {
   margin-bottom: 8px;
 }
 
+.course-pillar-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.course-pillar-label {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.course-pillar-select {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+}
+
 .course-title {
   font-family: var(--font-display);
   font-size: 1.4rem;
