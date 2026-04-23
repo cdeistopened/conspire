@@ -554,11 +554,11 @@ export function DocumentPanel({ document, onClose }: Props) {
             </div>
 
             <div className="prop-field">
-              <label>Thumbnails (3 A/B + watercolor)</label>
-              <div className="thumbnail-grid">
-                {[0, 1, 2, 3].map((slot) => {
+              <label>YouTube thumbnails (A/B)</label>
+              <div className="thumbnail-grid thumbnail-grid-ab">
+                {[0, 1, 2].map((slot) => {
                   const url = document.thumbnail_urls?.[slot] || "";
-                  const label = slot === 3 ? "Watercolor" : `A/B ${slot + 1}`;
+                  const label = `A/B ${slot + 1}`;
                   const slotTarget = `slot-${slot}` as const;
                   const isUploading = uploadState?.target === slotTarget;
                   return (
@@ -632,6 +632,83 @@ export function DocumentPanel({ document, onClose }: Props) {
             </div>
 
             <div className="prop-field">
+              <label>Blog post thumbnail (watercolor)</label>
+              <div className="thumbnail-grid thumbnail-grid-watercolor">
+                {(() => {
+                  const slot = 3;
+                  const url = document.thumbnail_urls?.[slot] || "";
+                  const label = "Watercolor";
+                  const slotTarget = `slot-${slot}` as const;
+                  const isUploading = uploadState?.target === slotTarget;
+                  return (
+                    <div
+                      className={`thumbnail-slot ${url ? "has-image" : ""} ${isUploading ? "uploading" : ""}`}
+                      onClick={(e) => {
+                        if (uploadState) return;
+                        if ((e.target as HTMLElement).closest(".thumbnail-slot-clear")) return;
+                        slotFileInputs.current[slot]?.click();
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.add("drag-over");
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.classList.remove("drag-over");
+                      }}
+                      onDrop={async (e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("drag-over");
+                        const file = e.dataTransfer.files[0];
+                        if (file) await uploadFile(file, slotTarget);
+                      }}
+                    >
+                      <input
+                        ref={(el) => {
+                          slotFileInputs.current[slot] = el;
+                        }}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) await uploadFile(file, slotTarget);
+                          e.target.value = "";
+                        }}
+                      />
+                      {url ? (
+                        <>
+                          <img src={url} alt={label} />
+                          <button
+                            className="thumbnail-slot-clear"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearThumbnailSlot({ id: document._id, slot });
+                            }}
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        </>
+                      ) : (
+                        <div className="thumbnail-slot-placeholder">
+                          <div className="thumbnail-slot-label">{label}</div>
+                          <div className="thumbnail-slot-hint">
+                            {isUploading ? `${uploadState?.percent ?? 0}%` : "Click or drop"}
+                          </div>
+                        </div>
+                      )}
+                      {isUploading && (
+                        <div className="dropzone-progress">
+                          <div className="dropzone-progress-bar" style={{ width: `${uploadState?.percent ?? 0}%` }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            <div className="prop-field">
               <label>Descript share URL</label>
               <input
                 className="prop-input"
@@ -648,6 +725,16 @@ export function DocumentPanel({ document, onClose }: Props) {
                   }
                 }}
               />
+              {document.descript_url && (
+                <div className="descript-embed">
+                  <iframe
+                    src={document.descript_url.replace("/view/", "/embed/")}
+                    title="Descript embed"
+                    className="descript-iframe"
+                    allow="autoplay; fullscreen"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="prop-field">
@@ -686,6 +773,27 @@ export function DocumentPanel({ document, onClose }: Props) {
                   }
                 }}
               />
+            </div>
+
+            <div className="prop-field">
+              <label>Blog meta description (Webflow SEO, 155 char target)</label>
+              <textarea
+                className="prop-textarea"
+                placeholder="Meta description for the Webflow blog post..."
+                defaultValue={document.meta_description ?? ""}
+                rows={2}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  if (val !== (document.meta_description ?? "")) {
+                    await updateDoc({ id: document._id, meta_description: val || undefined } as any);
+                  }
+                }}
+              />
+              {document.meta_description && (
+                <span className={`prop-char-count ${document.meta_description.length > 155 ? "over" : ""}`}>
+                  {document.meta_description.length}/155
+                </span>
+              )}
             </div>
           </div>
         )}

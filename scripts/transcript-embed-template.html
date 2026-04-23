@@ -1,0 +1,260 @@
+<div data-rt-embed-type='true'><!DOCTYPE html>
+    
+    
+    <html lang="en">
+    <head>
+    <style>
+    .transcript-container {
+    margin: 2rem 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .transcript-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: #FAFAF8;
+    border: 1px solid #E8E8E6;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #1A1A1A;
+    width: 100%;
+    text-align: left;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    }
+    
+    .transcript-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 87, 51, 0.08) 0%, rgba(255, 87, 51, 0.03) 100%);
+    transition: width 0.3s ease;
+    z-index: 0;
+    }
+    
+    .transcript-toggle:hover::before {
+    width: 100%;
+    }
+    
+    .transcript-toggle:hover {
+    border-color: #FF5733;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 87, 51, 0.15);
+    }
+    
+    .transcript-toggle:hover .transcript-icon {
+    color: #FF5733;
+    transform: scale(1.05);
+    }
+    
+    .transcript-toggle:active {
+    transform: translateY(0);
+    }
+    
+    .transcript-icon {
+    width: 20px;
+    height: 20px;
+    color: #666;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+    }
+    
+    .toggle-text {
+    position: relative;
+    z-index: 1;
+    }
+    
+    .toggle-arrow {
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    transition: transform 0.3s ease;
+    color: #999;
+    position: relative;
+    z-index: 1;
+    }
+    
+    .transcript-toggle.active .toggle-arrow {
+    transform: rotate(90deg);
+    color: #FF5733;
+    }
+    
+    .transcript-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    opacity: 0;
+    }
+    
+    .transcript-content.show {
+    max-height: none;
+    opacity: 1;
+    transition: max-height 0.5s ease-in, opacity 0.3s ease-in;
+    }
+    
+    .transcript-text {
+    padding: 1.75rem;
+    background: #FAFAF8;
+    border-radius: 0 0 12px 12px;
+    line-height: 1.7;
+    color: #4A4A4A;
+    border: 1px solid #E8E8E6;
+    border-top: none;
+    margin-top: -12px;
+    font-size: 0.9375rem;
+    }
+    
+    /* Style for the transcript paragraphs */
+    .transcript-text p {
+    margin-bottom: 1.25rem;
+    line-height: 1.7;
+    }
+    
+    .transcript-text p:last-child {
+    margin-bottom: 0;
+    }
+    
+    /* Speaker labels */
+    .speaker {
+    font-weight: 600;
+    color: #1A1A1A;
+    margin-right: 0.5rem;
+    }
+    
+    /* Markdown styling */
+    .transcript-text h1,
+    .transcript-text h2,
+    .transcript-text h3,
+    .transcript-text h4 {
+    color: #1A1A1A;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    }
+    
+    .transcript-text h1 { font-size: 1.5rem; }
+    .transcript-text h2 { font-size: 1.25rem; }
+    .transcript-text h3 { font-size: 1.1rem; }
+    .transcript-text h4 { font-size: 1rem; }
+    
+    .transcript-text strong {
+    font-weight: 600;
+    color: #1A1A1A;
+    }
+    
+    .transcript-text em {
+    font-style: italic;
+    }
+    
+    .transcript-text ul,
+    .transcript-text ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+    }
+    
+    .transcript-text li {
+    margin-bottom: 0.5rem;
+    }
+    
+    .transcript-text blockquote {
+    border-left: 3px solid #FF5733;
+    padding-left: 1rem;
+    margin: 1.25rem 0;
+    color: #666;
+    font-style: italic;
+    }
+    
+    .transcript-text code {
+    background: #f4f4f4;
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-size: 0.875rem;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    }
+    
+    .transcript-text pre {
+    background: #f4f4f4;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 1.25rem;
+    }
+    
+    .transcript-text hr {
+    border: none;
+    border-top: 1px solid #E8E8E6;
+    margin: 2rem 0;
+    }
+    
+    </style>
+    </head>
+    <body>
+    
+    <div class="transcript-container">
+    <button class="transcript-toggle" onclick="toggleTranscript()">
+    <!-- Transcript icon -->
+    <svg class="transcript-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    <span class="toggle-text">View Transcript</span>
+    <!-- Arrow icon -->
+    <svg class="toggle-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="9 18 15 12 9 6"/>
+    </svg>
+    </button>
+    
+    <div class="transcript-content" id="transcriptContent">
+    <div class="transcript-text" id="transcriptText">{{TRANSCRIPT}}</div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <script>
+    function toggleTranscript() {
+    const button = document.querySelector('.transcript-toggle');
+    const content = document.getElementById('transcriptContent');
+    const buttonText = button.querySelector('.toggle-text');
+    
+    button.classList.toggle('active');
+    content.classList.toggle('show');
+    
+    if (content.classList.contains('show')) {
+    buttonText.textContent = 'Hide Transcript';
+    } else {
+    buttonText.textContent = 'View Transcript';
+    }
+    }
+    
+    // Function to render markdown
+    function renderMarkdown() {
+    const transcriptDiv = document.getElementById('transcriptText');
+    const markdownContent = transcriptDiv.textContent;
+    
+    // Configure marked options
+    marked.setOptions({
+    breaks: true, // Converts single line breaks to <br>
+    gfm: true, // GitHub Flavored Markdown
+    });
+    
+    // Render the markdown
+    transcriptDiv.innerHTML = marked.parse(markdownContent);
+    }
+    
+    // Render markdown when page loads
+    document.addEventListener('DOMContentLoaded', renderMarkdown);
+    </script>
+    
+    </body>
+    </html></div>
