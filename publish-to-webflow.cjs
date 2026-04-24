@@ -34,6 +34,7 @@ const WEBFLOW_SITE_ID = '67c7406fc9e6913d1b92e341';
 const POSTS_COLLECTION_ID = '6805bf729a7b33423cc8a08c';
 const PODCAST_TYPE_ID = '6805d42ba524fabb70579f4e';
 const PROOF_BASE = 'https://proof-editor-production.up.railway.app';
+const DEFAULT_AUTHOR_ID = '687a70eecef12fb34cead69a'; // Ela Bass
 
 function arg(name) {
   const found = process.argv.find(a => a.startsWith(`--${name}=`));
@@ -149,21 +150,40 @@ function mdToHtml(md, { demoteHeadings = false } = {}) {
 }
 
 function buildTranscriptEmbed(transcriptMarkdown) {
-  const tmpl = fs.readFileSync(
-    path.join(__dirname, 'scripts', 'transcript-embed-template.html'),
-    'utf8'
-  );
-  // The template has a {{TRANSCRIPT}} placeholder in the position where the
-  // original post put its raw markdown (inside #transcriptText, which
-  // marked.js reads via .textContent and renders client-side). Anything that
-  // would break HTML parsing when embedded is safe because the enclosing div
-  // is served as text content to marked.js — but an actual "</div>" substring
-  // would terminate the wrapper early. Escape the two problematic sequences.
-  const safe = transcriptMarkdown
-    .replace(/<\/div>/gi, '&lt;/div&gt;')
-    .replace(/<\/html>/gi, '&lt;/html&gt;')
-    .replace(/<\/body>/gi, '&lt;/body&gt;');
-  return tmpl.replace('{{TRANSCRIPT}}', safe);
+  // Pre-render the transcript markdown to HTML at build time instead of
+  // relying on marked.js in the browser. The original template loads marked
+  // via CDN and runs a DOMContentLoaded listener — both flaky inside a
+  // Webflow rich-text embed (Designer's preview truncates, and the listener
+  // may fire before the embed is hydrated). Pre-rendering makes the widget
+  // self-contained: no external scripts, no runtime JS beyond the toggle.
+  const rendered = mdToHtml(transcriptMarkdown, { demoteHeadings: false });
+  return `<div data-rt-embed-type='true'><style>
+.transcript-container { margin: 2rem 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.transcript-toggle { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1.25rem; background: #FAFAF8; border: 1px solid #E8E8E6; border-radius: 12px; cursor: pointer; font-size: 0.9375rem; font-weight: 500; color: #1A1A1A; width: 100%; text-align: left; transition: all 0.2s ease; }
+.transcript-toggle:hover { border-color: #FF5733; box-shadow: 0 2px 8px rgba(255, 87, 51, 0.15); }
+.transcript-toggle .toggle-arrow { margin-left: auto; transition: transform 0.3s ease; color: #999; }
+.transcript-toggle.active .toggle-arrow { transform: rotate(90deg); color: #FF5733; }
+.transcript-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; }
+.transcript-content.show { max-height: none; opacity: 1; transition: opacity 0.3s ease-in; }
+.transcript-text { padding: 1.75rem; background: #FAFAF8; border-radius: 12px; margin-top: 1rem; border: 1px solid #E8E8E6; color: #1A1A1A; line-height: 1.7; font-size: 0.9375rem; }
+.transcript-text p { margin-bottom: 1.25rem; }
+.transcript-text p:last-child { margin-bottom: 0; }
+.transcript-text h2, .transcript-text h3, .transcript-text h4 { color: #1A1A1A; margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: 600; }
+.transcript-text h2 { font-size: 1.25rem; }
+.transcript-text h3 { font-size: 1.1rem; }
+.transcript-text strong { font-weight: 600; color: #1A1A1A; }
+.transcript-text em { font-style: italic; }
+.transcript-text ul, .transcript-text ol { margin-bottom: 1.25rem; padding-left: 1.5rem; }
+.transcript-text li { margin-bottom: 0.5rem; }
+</style>
+<div class="transcript-container">
+<button class="transcript-toggle" onclick="var b=this,c=this.nextElementSibling,t=b.querySelector('.toggle-text');b.classList.toggle('active');c.classList.toggle('show');t.textContent=c.classList.contains('show')?'Hide Transcript':'View Transcript';">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+<span class="toggle-text">View Transcript</span>
+<svg class="toggle-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</button>
+<div class="transcript-content"><div class="transcript-text">${rendered}</div></div>
+</div></div>`;
 }
 
 async function fetchProofDoc(slug, token) {
@@ -278,16 +298,10 @@ async function main() {
   ].join('');
   const content = subscribeLinks + transcriptEmbed + bodyHtml;
 
-  const podcastEmbed = doc.descript_url
-    ? (() => {
-        const embed = doc.descript_url.replace('/view/', '/embed/');
-        return [
-          "<figure class=\"w-richtext-figure-type-video w-richtext-align-fullwidth\" data-rt-type=\"video\" data-rt-align=\"fullwidth\">",
-          `<div><iframe src="${embed}" frameborder="0" allowfullscreen="" allow="autoplay; fullscreen"></iframe></div>`,
-          '</figure>',
-        ].join('');
-      })()
-    : '';
+  // Leave podcast-embed / video-embed blank for now. YouTube iframe goes in
+  // later once the upload is live — populated by a separate PATCH after
+  // publish-to-youtube.cjs returns a platformPostUrl.
+  const podcastEmbed = '';
 
   let thumbnailAsset = null;
   const watercolorUrl = doc.thumbnail_urls?.[3];
@@ -306,6 +320,7 @@ async function main() {
     name: title,
     slug,
     'post-type': [PODCAST_TYPE_ID],
+    author: DEFAULT_AUTHOR_ID,
     summary: metaDesc,
     content,
     'podcast-embed': podcastEmbed,
