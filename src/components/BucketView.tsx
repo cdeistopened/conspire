@@ -74,6 +74,7 @@ interface Filters {
   hideNotRichard: boolean;
   hidePromo: boolean;
   search: string;
+  tagFilter: string;
 }
 
 const DEFAULT_FILTERS: Filters = {
@@ -82,6 +83,7 @@ const DEFAULT_FILTERS: Filters = {
   hideNotRichard: true,
   hidePromo: true,
   search: "",
+  tagFilter: "",
 };
 
 const FILTERS_KEY = "conspire_bucket_filters";
@@ -138,12 +140,17 @@ export function BucketView({ documents, onCardClick }: Props) {
   // Filters applied to the full document set
   const filteredDocs = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
+    const tagQ = filters.tagFilter.trim().toLowerCase();
     return documents.filter((d) => {
       if (filters.status !== "all" && d.status !== filters.status) return false;
       const tags = d.tags ?? [];
       if (filters.hideAgeMention && tags.includes("flag:age-mention")) return false;
       if (filters.hideNotRichard && tags.includes("flag:not-richard")) return false;
       if (filters.hidePromo && tags.includes("flag:promo")) return false;
+      if (tagQ) {
+        const hasMatch = tags.some((t) => t.toLowerCase().includes(tagQ));
+        if (!hasMatch) return false;
+      }
       if (q) {
         const hay = (
           (d.title ?? "") +
@@ -333,6 +340,16 @@ function BucketFilterBar({
           value={filters.search}
           onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           className="bucket-filter-search"
+        />
+      </div>
+      <div className="bucket-filter-group">
+        <input
+          type="text"
+          placeholder="Tag filter (e.g. tier:top10)"
+          value={filters.tagFilter}
+          onChange={(e) => setFilters({ ...filters, tagFilter: e.target.value })}
+          className="bucket-filter-search"
+          title="Matches any tag substring. Try: tier:top10, pillar:mind-mastery, cluster:mm-001"
         />
       </div>
       <div className="bucket-filter-group">
