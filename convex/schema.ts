@@ -17,6 +17,7 @@ export default defineSchema({
     status: v.union(
       v.literal("draft"),
       v.literal("review"),
+      v.literal("staging"),
       v.literal("approved"),
       v.literal("scheduled"),
       v.literal("posted"),
@@ -80,6 +81,13 @@ export default defineSchema({
     // thread" or "needs cold-open re-cut". Searchable in the Bucket filter bar.
     notes: v.optional(v.string()),
 
+    // Per-platform captions (generated in staging-queue pipeline, editable in panel)
+    caption_instagram: v.optional(v.string()),
+    caption_tiktok: v.optional(v.string()),
+    caption_youtube_title: v.optional(v.string()),
+    caption_youtube_description: v.optional(v.string()),
+    caption_facebook: v.optional(v.string()),
+
     performance: v.optional(
       v.object({
         likes: v.optional(v.number()),
@@ -125,4 +133,153 @@ export default defineSchema({
   })
     .index("by_document", ["document"])
     .index("by_timestamp", ["timestamp"]),
+
+  externalSurfaces: defineTable({
+    workspace: v.string(),
+    documentId: v.optional(v.id("documents")),
+    source: v.union(
+      v.literal("getlate"),
+      v.literal("gsc"),
+      v.literal("ga4"),
+      v.literal("webflow"),
+      v.literal("manual")
+    ),
+    surfaceType: v.union(
+      v.literal("social_post"),
+      v.literal("page"),
+      v.literal("post"),
+      v.literal("video"),
+      v.literal("newsletter"),
+      v.literal("unknown")
+    ),
+    externalId: v.optional(v.string()),
+    url: v.optional(v.string()),
+    platform: v.optional(v.string()),
+    title: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    firstSeen: v.number(),
+    lastSeen: v.number(),
+    metadata: v.optional(v.any()),
+  })
+    .index("by_workspace", ["workspace"])
+    .index("by_document", ["documentId"])
+    .index("by_workspace_source", ["workspace", "source"])
+    .index("by_workspace_source_external", ["workspace", "source", "externalId"])
+    .index("by_workspace_url", ["workspace", "url"]),
+
+  metricSnapshots: defineTable({
+    workspace: v.string(),
+    source: v.union(
+      v.literal("getlate"),
+      v.literal("gsc"),
+      v.literal("ga4"),
+      v.literal("webflow"),
+      v.literal("manual")
+    ),
+    date: v.string(),
+    documentId: v.optional(v.id("documents")),
+    surfaceId: v.optional(v.id("externalSurfaces")),
+    metrics: v.object({
+      views: v.optional(v.number()),
+      impressions: v.optional(v.number()),
+      reach: v.optional(v.number()),
+      clicks: v.optional(v.number()),
+      pageviews: v.optional(v.number()),
+      sessions: v.optional(v.number()),
+      users: v.optional(v.number()),
+      likes: v.optional(v.number()),
+      comments: v.optional(v.number()),
+      shares: v.optional(v.number()),
+      saves: v.optional(v.number()),
+      engagementRate: v.optional(v.number()),
+      position: v.optional(v.number()),
+    }),
+    lastSynced: v.number(),
+  })
+    .index("by_workspace_date", ["workspace", "date"])
+    .index("by_document_date", ["documentId", "date"])
+    .index("by_surface_date", ["surfaceId", "date"])
+    .index("by_source_date", ["source", "date"]),
+
+  contentEvents: defineTable({
+    workspace: v.string(),
+    documentId: v.optional(v.id("documents")),
+    timestamp: v.number(),
+    actor: v.string(),
+    category: v.union(
+      v.literal("seo"),
+      v.literal("content"),
+      v.literal("publishing"),
+      v.literal("technical"),
+      v.literal("distribution"),
+      v.literal("analytics"),
+      v.literal("manual")
+    ),
+    source: v.union(
+      v.literal("conspire"),
+      v.literal("webflow"),
+      v.literal("getlate"),
+      v.literal("sync"),
+      v.literal("manual")
+    ),
+    description: v.string(),
+    before: v.optional(v.any()),
+    after: v.optional(v.any()),
+  })
+    .index("by_workspace_timestamp", ["workspace", "timestamp"])
+    .index("by_document_timestamp", ["documentId", "timestamp"])
+    .index("by_workspace_category", ["workspace", "category"]),
+
+  assetRollups: defineTable({
+    workspace: v.string(),
+    documentId: v.optional(v.id("documents")),
+    surfaceId: v.optional(v.id("externalSurfaces")),
+    assetTitle: v.string(),
+    assetType: v.string(),
+    status: v.optional(v.string()),
+    priorityBucket: v.union(
+      v.literal("falling_after_change"),
+      v.literal("rising_after_change"),
+      v.literal("published_unmeasured"),
+      v.literal("changed_recently"),
+      v.literal("missing_metadata"),
+      v.literal("unmatched_surface"),
+      v.literal("stable")
+    ),
+    recommendation: v.string(),
+    topSource: v.optional(v.string()),
+    latestEventAt: v.optional(v.number()),
+    latestEventDescription: v.optional(v.string()),
+    metrics7: v.any(),
+    metrics28: v.any(),
+    periodEnd: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace", ["workspace"])
+    .index("by_workspace_bucket", ["workspace", "priorityBucket"])
+    .index("by_document", ["documentId"])
+    .index("by_surface", ["surfaceId"]),
+
+  syncRuns: defineTable({
+    workspace: v.string(),
+    source: v.union(
+      v.literal("getlate"),
+      v.literal("gsc"),
+      v.literal("ga4"),
+      v.literal("all")
+    ),
+    status: v.union(
+      v.literal("running"),
+      v.literal("success"),
+      v.literal("error")
+    ),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    surfaces: v.optional(v.number()),
+    snapshots: v.optional(v.number()),
+    rollups: v.optional(v.number()),
+    errors: v.optional(v.array(v.string())),
+  })
+    .index("by_workspace_started", ["workspace", "startedAt"])
+    .index("by_workspace_source", ["workspace", "source"]),
 });

@@ -111,6 +111,8 @@ http.route({
       source: body.source,
       thumbnail_url: body.thumbnail_url,
       meta_description: body.meta_description,
+      external_url: body.external_url,
+      actor: body.actor ?? "Agent",
     });
 
     if (body.status) {

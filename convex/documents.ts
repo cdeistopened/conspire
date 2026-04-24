@@ -25,11 +25,47 @@ const PLATFORM_VALIDATOR = v.union(
 const STATUS_VALIDATOR = v.union(
   v.literal("draft"),
   v.literal("review"),
+  v.literal("staging"),
   v.literal("approved"),
   v.literal("scheduled"),
   v.literal("posted"),
   v.literal("archived")
 );
+
+const EVENT_FIELDS: Record<string, "seo" | "content" | "publishing" | "technical"> = {
+  title: "content",
+  body: "content",
+  meta_description: "seo",
+  status: "publishing",
+  publish_date: "publishing",
+  published_date: "publishing",
+  scheduled_date: "publishing",
+  external_url: "publishing",
+  zernio_post_id: "publishing",
+  proof_slug: "technical",
+  proof_token: "technical",
+};
+
+function hasMeaningfulChange(before: unknown, after: unknown) {
+  return JSON.stringify(before ?? null) !== JSON.stringify(after ?? null);
+}
+
+function describeChange(key: string) {
+  const labels: Record<string, string> = {
+    title: "Title changed",
+    body: "Body changed",
+    meta_description: "Meta description changed",
+    status: "Status changed",
+    publish_date: "Publish date changed",
+    published_date: "Published date changed",
+    scheduled_date: "Scheduled date changed",
+    external_url: "External URL changed",
+    zernio_post_id: "Getlate post attached",
+    proof_slug: "Proof document linked",
+    proof_token: "Proof access token changed",
+  };
+  return labels[key] ?? `${key} changed`;
+}
 
 export const listByStatus = query({
   args: {
@@ -135,7 +171,21 @@ export const updateStatus = mutation({
     actor: v.string(),
   },
   handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, { status: args.status });
+    if (doc && doc.status !== args.status) {
+      await ctx.db.insert("contentEvents", {
+        workspace: doc.workspace ?? "opened",
+        documentId: args.id,
+        timestamp: Date.now(),
+        actor: args.actor,
+        category: "publishing",
+        source: "conspire",
+        description: `Status changed: ${doc.status} -> ${args.status}`,
+        before: { status: doc.status },
+        after: { status: args.status },
+      });
+    }
   },
 });
 
@@ -165,14 +215,22 @@ export const update = mutation({
     descript_url: v.optional(v.string()),
     newsletter_subject: v.optional(v.string()),
     newsletter_preview: v.optional(v.string()),
+    external_url: v.optional(v.string()),
     zernio_post_id: v.optional(v.string()),
     zernio_scheduled_at: v.optional(v.number()),
     zernio_error: v.optional(v.string()),
     chosen_variant_index: v.optional(v.number()),
     notes: v.optional(v.string()),
+    caption_instagram: v.optional(v.string()),
+    caption_tiktok: v.optional(v.string()),
+    caption_youtube_title: v.optional(v.string()),
+    caption_youtube_description: v.optional(v.string()),
+    caption_facebook: v.optional(v.string()),
+    actor: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { id, ...fields } = args;
+    const { id, actor, ...fields } = args;
+    const beforeDoc = await ctx.db.get(id);
     const updates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
       if (value !== undefined) {
@@ -181,6 +239,24 @@ export const update = mutation({
     }
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(id, updates);
+    }
+    if (beforeDoc && Object.keys(updates).length > 0) {
+      for (const [key, value] of Object.entries(updates)) {
+        if (!(key in EVENT_FIELDS)) continue;
+        const beforeValue = (beforeDoc as any)[key];
+        if (!hasMeaningfulChange(beforeValue, value)) continue;
+        await ctx.db.insert("contentEvents", {
+          workspace: (updates.workspace as string | undefined) ?? beforeDoc.workspace ?? "opened",
+          documentId: id,
+          timestamp: Date.now(),
+          actor: actor ?? "Agent",
+          category: EVENT_FIELDS[key],
+          source: "conspire",
+          description: describeChange(key),
+          before: { [key]: beforeValue },
+          after: { [key]: value },
+        });
+      }
     }
   },
 });

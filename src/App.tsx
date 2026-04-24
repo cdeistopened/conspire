@@ -6,20 +6,22 @@ import { NewPostModal } from "./components/NewPostModal";
 import { DocumentPanel } from "./components/DocumentPanel";
 import { ReviewView } from "./components/ReviewView";
 import { AudienceScorecard } from "./components/AudienceScorecard";
+import { AnalyticsView } from "./components/AnalyticsView";
 import { BucketView } from "./components/BucketView";
 import { CourseView } from "./components/CourseView";
 import type { Doc, Id } from "../convex/_generated/dataModel";
 import { WORKSPACE, ALL_WORKSPACES, switchWorkspace, isUnlocked, unlock } from "./workspace";
 
-type ViewMode = "kanban" | "review" | "scorecard" | "bucket" | "course";
+type ViewMode = "kanban" | "review" | "scorecard" | "analytics" | "bucket" | "course";
 
-// Read view mode from URL: ?view=review / ?view=scorecard / ?view=bucket / ?view=course
+// Read view mode from URL: ?view=review / ?view=scorecard / ?view=analytics / ?view=bucket / ?view=course
 function readViewMode(): ViewMode {
   if (typeof window === "undefined") return "kanban";
   const params = new URLSearchParams(window.location.search);
   const v = params.get("view");
   if (v === "review") return "review";
   if (v === "scorecard") return "scorecard";
+  if (v === "analytics") return "analytics";
   if (v === "bucket") return "bucket";
   if (v === "course") return "course";
   return "kanban";
@@ -238,18 +240,32 @@ export function App() {
               </span>
             </button>
             {WORKSPACE.name === "opened" && (
-              <button
-                className={`nav-item ${viewMode === "scorecard" ? "active" : ""}`}
-                onClick={() => {
-                  setViewMode("scorecard");
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("view", "scorecard");
-                  window.history.replaceState({}, "", url.toString());
-                  setShowNav(false);
-                }}
-              >
-                Audience Scorecard
-              </button>
+              <>
+                <button
+                  className={`nav-item ${viewMode === "analytics" ? "active" : ""}`}
+                  onClick={() => {
+                    setViewMode("analytics");
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("view", "analytics");
+                    window.history.replaceState({}, "", url.toString());
+                    setShowNav(false);
+                  }}
+                >
+                  Analytics
+                </button>
+                <button
+                  className={`nav-item ${viewMode === "scorecard" ? "active" : ""}`}
+                  onClick={() => {
+                    setViewMode("scorecard");
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("view", "scorecard");
+                    window.history.replaceState({}, "", url.toString());
+                    setShowNav(false);
+                  }}
+                >
+                  Audience Scorecard
+                </button>
+              </>
             )}
             <button
               className={`nav-item ${viewMode === "bucket" ? "active" : ""}`}
@@ -316,6 +332,8 @@ export function App() {
           />
         ) : viewMode === "scorecard" ? (
           <AudienceScorecard />
+        ) : viewMode === "analytics" ? (
+          <AnalyticsView />
         ) : viewMode === "bucket" ? (
           <BucketView
             documents={documents ?? []}

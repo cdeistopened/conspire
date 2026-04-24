@@ -7,6 +7,7 @@ import type { Doc } from "../../convex/_generated/dataModel";
 const COLUMNS = [
   { status: "draft" as const, label: "Draft", color: "#C8943E", emptyMsg: "No drafts yet — create one above" },
   { status: "review" as const, label: "Review", color: "#7B8794", emptyMsg: "Drag posts here for review" },
+  { status: "staging" as const, label: "Staging", color: "#E2714A", emptyMsg: "Move 5-10 here for final polish" },
   { status: "approved" as const, label: "Approved", color: "#4A9B6E", emptyMsg: "Approved posts appear here" },
   { status: "scheduled" as const, label: "Scheduled", color: "#5B7FD4", emptyMsg: "Schedule approved posts" },
   { status: "posted" as const, label: "Posted", color: "#1E1E1E", emptyMsg: "Published posts land here" },

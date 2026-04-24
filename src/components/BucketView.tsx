@@ -361,6 +361,7 @@ function BucketFilterBar({
           <option value="all">All</option>
           <option value="draft">Draft</option>
           <option value="review">Review</option>
+          <option value="staging">Staging</option>
           <option value="approved">Approved</option>
           <option value="scheduled">Scheduled</option>
           <option value="posted">Posted</option>

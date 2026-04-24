@@ -9,6 +9,7 @@
  */
 
 import type * as activity from "../activity.js";
+import type * as analytics from "../analytics.js";
 import type * as campaigns from "../campaigns.js";
 import type * as documents from "../documents.js";
 import type * as http from "../http.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activity: typeof activity;
+  analytics: typeof analytics;
   campaigns: typeof campaigns;
   documents: typeof documents;
   http: typeof http;

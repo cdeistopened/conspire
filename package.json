@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node server.js",
+    "sync:opened-analytics": "node scripts/sync-opened-analytics.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

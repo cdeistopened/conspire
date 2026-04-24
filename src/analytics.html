@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RLM Social Analytics</title>
+<style>
+  :root {
+    --bg: #FAF6EF; --ink: #1E1E1E; --mute: #6b6459; --line: #e8e0d0;
+    --gold: #C8943E; --card: #fff; --good: #2a7a3a; --warn: #a8601a; --bad: #a02020;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--bg); color: var(--ink);
+    font: 14px/1.5 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif; }
+  h1, h2, h3 { font-family: "Epilogue", "Space Grotesk", system-ui; font-weight: 650; letter-spacing: -0.01em; }
+  h1 { font-size: 22px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mute); margin: 28px 0 10px; }
+  header { display: flex; align-items: center; gap: 16px; padding: 20px 28px 16px; border-bottom: 1px solid var(--line); }
+  header .dot { color: var(--gold); font-size: 18px; }
+  header select { font: inherit; padding: 5px 8px; border: 1px solid var(--line); background: var(--card); border-radius: 5px; margin-left: auto; }
+  header .meta { color: var(--mute); font-size: 11px; font-family: ui-monospace, monospace; }
+  main { padding: 20px 28px 60px; max-width: 1400px; }
+
+  /* Account bar */
+  .accounts { display: flex; gap: 20px; margin-bottom: 4px; }
+  .acct { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .acct .pill { padding: 2px 7px; border-radius: 4px; background: #f0e8d8; font-size: 11px;
+    font-family: ui-monospace, monospace; text-transform: lowercase; }
+  .acct .followers { font-weight: 600; }
+
+  /* Time-window cards */
+  .windows { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .wcard { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+  .wcard .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mute); margin-bottom: 4px; }
+  .wcard .num { font-family: "Epilogue", system-ui; font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .wcard .sub { font-size: 11px; color: var(--mute); margin-top: 2px; }
+  .wcard .delta { font-size: 12px; font-weight: 600; }
+  .wcard .delta.up { color: var(--good); }
+  .wcard .delta.down { color: var(--bad); }
+
+  /* Weekly chart */
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 120px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px 28px; position: relative; }
+  .bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
+  .bar { background: var(--gold); border-radius: 3px 3px 0 0; width: 100%; min-height: 2px; transition: height 0.3s; }
+  .bar-label { font-size: 9px; color: var(--mute); margin-top: 4px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 100%; position: absolute; bottom: 8px; font-family: ui-monospace, monospace; }
+  .bar-val { font-size: 9px; color: var(--ink); margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+
+  /* Platform split */
+  .plat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .plat-card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+  .plat-card h3 { font-size: 14px; margin-bottom: 8px; }
+  .plat-card .row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0;
+    border-bottom: 1px solid #f5efe5; }
+  .plat-card .row:last-child { border-bottom: none; }
+  .plat-card .row .k { color: var(--mute); }
+  .plat-card .row .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Top videos */
+  .top-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .top-table th { background: #f5efe1; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--mute); font-weight: 600; text-align: left; padding: 8px 10px; }
+  .top-table th.r { text-align: right; }
+  .top-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .top-table tr:last-child td { border-bottom: none; }
+  .top-table td.r { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .top-table .rank { color: var(--mute); font-size: 12px; width: 28px; }
+  .post-row { display: flex; align-items: center; gap: 10px; }
+  .post-thumb { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: #eee; flex-shrink: 0; }
+  .post-text { font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden; max-width: 400px; }
+  .post-text a { color: inherit; text-decoration: none; }
+  .post-text a:hover { color: var(--gold); }
+  .pill { display: inline-block; padding: 1px 6px; border-radius: 3px; background: #f0e8d8;
+    font-size: 10px; font-family: ui-monospace, monospace; }
+  .loading { color: var(--mute); padding: 24px; font-style: italic; }
+  .error { color: #a00; background: #fee; padding: 12px; border-radius: 6px; }
+  @media (max-width: 900px) {
+    .windows { grid-template-columns: repeat(3, 1fr); }
+    .plat-grid { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+  @media (max-width: 600px) {
+    .windows { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot">&#9670;</span>
+  <h1>RLM Social Analytics</h1>
+  <select id="profile"></select>
+  <span class="meta" id="sync"></span>
+</header>
+<main>
+  <div class="accounts" id="accounts"></div>
+  <h2>Total Views</h2>
+  <div class="windows" id="windows"><div class="loading">Loading...</div></div>
+  <h2>Views by Week</h2>
+  <div class="chart" id="chart"><div class="loading">Loading...</div></div>
+  <h2>Platform Breakdown</h2>
+  <div class="plat-grid" id="platforms"><div class="loading">Loading...</div></div>
+  <h2>Top Videos</h2>
+  <table class="top-table" id="top"><tbody><tr><td class="loading">Loading...</td></tr></tbody></table>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => typeof n === 'number' ? n.toLocaleString() : '-';
+const pct = n => typeof n === 'number' ? n.toFixed(1) + '%' : '-';
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function daysBetween(a, b) { return Math.floor((b - a) / 86400000); }
+
+function filterByDays(posts, days, now) {
+  const cutoff = new Date(now - days * 86400000);
+  return posts.filter(p => new Date(p.publishedAt) >= cutoff);
+}
+
+function sumViews(posts) {
+  return posts.reduce((s, p) => s + (p.analytics?.views || 0), 0);
+}
+
+function renderAccounts(accounts) {
+  $('accounts').innerHTML = accounts.map(a =>
+    `<div class="acct"><span class="pill">${a.platform}</span>
+     <span>@${esc(a.username || a.displayName)}</span>
+     <span class="followers">${fmt(a.followersCount)} followers</span></div>`
+  ).join('');
+}
+
+function renderWindows(posts, now) {
+  const windows = [
+    { label: '7 days', days: 7 },
+    { label: '30 days', days: 30 },
+    { label: '90 days', days: 90 },
+    { label: '6 months', days: 180 },
+    { label: 'All time', days: 99999 },
+  ];
+  $('windows').innerHTML = windows.map(w => {
+    const inWindow = filterByDays(posts, w.days, now);
+    const views = sumViews(inWindow);
+    const likes = inWindow.reduce((s, p) => s + (p.analytics?.likes || 0), 0);
+    const postCount = inWindow.length;
+    const avgEng = postCount > 0
+      ? inWindow.reduce((s, p) => s + (p.analytics?.engagementRate || 0), 0) / postCount
+      : 0;
+
+    let deltaHtml = '';
+    if (w.days < 99999) {
+      const priorStart = new Date(now - w.days * 2 * 86400000);
+      const priorEnd = new Date(now - w.days * 86400000);
+      const prior = posts.filter(p => {
+        const d = new Date(p.publishedAt);
+        return d >= priorStart && d < priorEnd;
+      });
+      const priorViews = sumViews(prior);
+      if (priorViews > 0) {
+        const change = ((views - priorViews) / priorViews * 100);
+        const cls = change >= 0 ? 'up' : 'down';
+        const sign = change >= 0 ? '+' : '';
+        deltaHtml = `<div class="delta ${cls}">${sign}${change.toFixed(0)}% vs prior ${w.label}</div>`;
+      }
+    }
+
+    return `<div class="wcard">
+      <div class="label">${w.label}</div>
+      <div class="num">${fmt(views)}</div>
+      <div class="sub">${fmt(postCount)} posts · ${fmt(likes)} likes · ${pct(avgEng)} avg eng</div>
+      ${deltaHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderChart(posts, now) {
+  const weeks = new Map();
+  for (const p of posts) {
+    const d = new Date(p.publishedAt);
+    const weekStart = new Date(d);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const key = weekStart.toISOString().slice(0, 10);
+    const prev = weeks.get(key) || { views: 0, posts: 0 };
+    prev.views += p.analytics?.views || 0;
+    prev.posts++;
+    weeks.set(key, prev);
+  }
+  const sorted = [...weeks.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  if (!sorted.length) { $('chart').innerHTML = '<div class="loading">No data.</div>'; return; }
+
+  const maxViews = Math.max(...sorted.map(([, v]) => v.views), 1);
+  const chartH = 80;
+
+  $('chart').innerHTML = sorted.map(([week, v]) => {
+    const h = Math.max(2, (v.views / maxViews) * chartH);
+    const label = week.slice(5);
+    return `<div class="bar-wrap">
+      <div class="bar-val">${v.views >= 1000 ? (v.views / 1000).toFixed(0) + 'K' : v.views}</div>
+      <div class="bar" style="height:${h}px" title="${fmt(v.views)} views, ${v.posts} posts"></div>
+      <span class="bar-label">${label}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPlatforms(posts) {
+  const byPlat = new Map();
+  for (const p of posts) {
+    for (const pl of p.platforms || []) {
+      const key = pl.platform;
+      const a = pl.analytics || {};
+      const prev = byPlat.get(key) || { posts: 0, views: 0, likes: 0, comments: 0, shares: 0, saves: 0, reach: 0, engSum: 0 };
+      prev.posts++;
+      prev.views += a.views || 0;
+      prev.likes += a.likes || 0;
+      prev.comments += a.comments || 0;
+      prev.shares += a.shares || 0;
+      prev.saves += a.saves || 0;
+      prev.reach += a.reach || 0;
+      prev.engSum += a.engagementRate || 0;
+      byPlat.set(key, prev);
+    }
+  }
+  const platforms = [...byPlat.entries()].sort((a, b) => b[1].views - a[1].views);
+  if (!platforms.length) { $('platforms').innerHTML = '<div class="loading">No data.</div>'; return; }
+
+  $('platforms').innerHTML = platforms.map(([name, s]) => {
+    const avgEng = s.posts > 0 ? (s.engSum / s.posts) : 0;
+    const rows = [
+      ['Posts', fmt(s.posts)],
+      ['Total views', fmt(s.views)],
+      ['Total reach', fmt(s.reach)],
+      ['Likes', fmt(s.likes)],
+      ['Comments', fmt(s.comments)],
+      ['Shares', fmt(s.shares)],
+      ['Saves', fmt(s.saves)],
+      ['Avg engagement', pct(avgEng)],
+      ['Views/post', fmt(s.posts > 0 ? Math.round(s.views / s.posts) : 0)],
+    ];
+    return `<div class="plat-card">
+      <h3><span class="pill">${name}</span></h3>
+      ${rows.map(([k, v]) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderTopVideos(posts) {
+  const sorted = [...posts]
+    .filter(p => (p.analytics?.views || 0) > 0)
+    .sort((a, b) => (b.analytics?.views || 0) - (a.analytics?.views || 0))
+    .slice(0, 20);
+
+  if (!sorted.length) { $('top').innerHTML = '<tbody><tr><td class="loading">No data.</td></tr></tbody>'; return; }
+
+  $('top').innerHTML = `
+    <thead><tr>
+      <th>#</th><th>Post</th><th>Platform</th>
+      <th class="r">Views</th><th class="r">Likes</th><th class="r">Saves</th>
+      <th class="r">Shares</th><th class="r">Eng %</th>
+    </tr></thead>
+    <tbody>${sorted.map((p, i) => {
+      const a = p.analytics || {};
+      const plat = p.platform || p.platforms?.[0]?.platform || '-';
+      const thumb = p.thumbnailUrl || '';
+      const text = (p.content || '').trim().slice(0, 120) || '(no caption)';
+      const url = p.platformPostUrl;
+      const textHtml = url
+        ? `<a href="${url}" target="_blank" rel="noopener">${esc(text)}</a>`
+        : esc(text);
+      return `<tr>
+        <td class="rank">${i + 1}</td>
+        <td><div class="post-row">
+          ${thumb ? `<img class="post-thumb" src="${esc(thumb)}" alt="" loading="lazy" />` : ''}
+          <div class="post-text">${textHtml}</div>
+        </div></td>
+        <td><span class="pill">${plat}</span></td>
+        <td class="r">${fmt(a.views)}</td>
+        <td class="r">${fmt(a.likes)}</td>
+        <td class="r">${fmt(a.saves)}</td>
+        <td class="r">${fmt(a.shares)}</td>
+        <td class="r">${pct(a.engagementRate)}</td>
+      </tr>`;
+    }).join('')}</tbody>`;
+}
+
+async function load(profileId) {
+  ['windows', 'chart', 'platforms'].forEach(id => { $(id).innerHTML = '<div class="loading">Loading...</div>'; });
+  $('top').innerHTML = '<tbody><tr><td class="loading">Loading...</td></tr></tbody>';
+
+  try {
+    const data = await fetchJSON(`/api/analytics?profileId=${encodeURIComponent(profileId)}`);
+    const posts = data.posts || [];
+    const accounts = data.accounts || [];
+    const now = Date.now();
+
+    $('sync').textContent = data.overview?.lastSync
+      ? `synced ${new Date(data.overview.lastSync).toLocaleString()} · ${posts.length} posts loaded`
+      : `${posts.length} posts loaded`;
+
+    renderAccounts(accounts);
+    renderWindows(posts, now);
+    renderChart(posts, now);
+    renderPlatforms(posts);
+    renderTopVideos(posts);
+  } catch (err) {
+    $('windows').innerHTML = `<div class="error">Failed: ${err.message}</div>`;
+  }
+}
+
+(async () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const lockedProfileId = params.get('profileId');
+
+    const { profiles } = await fetchJSON('/api/profiles');
+    const sel = $('profile');
+
+    if (lockedProfileId) {
+      const match = profiles.find(p => p._id === lockedProfileId);
+      sel.innerHTML = `<option value="${lockedProfileId}">${match?.name || 'Analytics'}</option>`;
+      sel.disabled = true;
+    } else {
+      sel.innerHTML = profiles.map(p => `<option value="${p._id}">${p.name}</option>`).join('');
+      const rlm = profiles.find(p => p.name === 'RLM');
+      if (rlm) sel.value = rlm._id;
+      sel.addEventListener('change', e => load(e.target.value));
+    }
+
+    await load(lockedProfileId || sel.value);
+  } catch (err) {
+    $('windows').innerHTML = `<div class="error">Bootstrap failed: ${err.message}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

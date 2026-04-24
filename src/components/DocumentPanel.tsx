@@ -860,6 +860,85 @@ export function DocumentPanel({ document, onClose }: Props) {
               />
             </div>
 
+            <div className="prop-field">
+              <label>Instagram caption</label>
+              <textarea
+                className="prop-input"
+                rows={6}
+                placeholder="Instagram post body + hashtags..."
+                defaultValue={(document as any).caption_instagram ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== ((document as any).caption_instagram ?? "")) {
+                    await updateDoc({ id: document._id, caption_instagram: val || undefined } as any);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>TikTok caption</label>
+              <textarea
+                className="prop-input"
+                rows={4}
+                placeholder="TikTok caption (short, punchy)..."
+                defaultValue={(document as any).caption_tiktok ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== ((document as any).caption_tiktok ?? "")) {
+                    await updateDoc({ id: document._id, caption_tiktok: val || undefined } as any);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>YouTube Short — title</label>
+              <input
+                className="prop-input"
+                placeholder="YouTube Short title (80 chars max)..."
+                defaultValue={(document as any).caption_youtube_title ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== ((document as any).caption_youtube_title ?? "")) {
+                    await updateDoc({ id: document._id, caption_youtube_title: val || undefined } as any);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>YouTube Short — description</label>
+              <textarea
+                className="prop-input"
+                rows={4}
+                placeholder="YouTube Short description..."
+                defaultValue={(document as any).caption_youtube_description ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== ((document as any).caption_youtube_description ?? "")) {
+                    await updateDoc({ id: document._id, caption_youtube_description: val || undefined } as any);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="prop-field">
+              <label>Facebook caption</label>
+              <textarea
+                className="prop-input"
+                rows={4}
+                placeholder="Facebook caption..."
+                defaultValue={(document as any).caption_facebook ?? ""}
+                onBlur={async (e) => {
+                  const val = e.target.value;
+                  if (val !== ((document as any).caption_facebook ?? "")) {
+                    await updateDoc({ id: document._id, caption_facebook: val || undefined } as any);
+                  }
+                }}
+              />
+            </div>
+
             {document.transcript && (
               <div className="prop-field">
                 <label>Transcript (read-only)</label>
