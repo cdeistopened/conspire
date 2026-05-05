@@ -9,12 +9,13 @@ import { AudienceScorecard } from "./components/AudienceScorecard";
 import { AnalyticsView } from "./components/AnalyticsView";
 import { BucketView } from "./components/BucketView";
 import { CourseView } from "./components/CourseView";
+import { AudienceView } from "./components/AudienceView";
 import type { Doc, Id } from "../convex/_generated/dataModel";
 import { WORKSPACE, ALL_WORKSPACES, switchWorkspace, isUnlocked, unlock } from "./workspace";
 
-type ViewMode = "kanban" | "review" | "scorecard" | "analytics" | "bucket" | "course";
+type ViewMode = "kanban" | "review" | "scorecard" | "analytics" | "bucket" | "course" | "audience";
 
-// Read view mode from URL: ?view=review / ?view=scorecard / ?view=analytics / ?view=bucket / ?view=course
+// Read view mode from URL: ?view=review / ?view=scorecard / ?view=analytics / ?view=bucket / ?view=course / ?view=audience
 function readViewMode(): ViewMode {
   if (typeof window === "undefined") return "kanban";
   const params = new URLSearchParams(window.location.search);
@@ -24,6 +25,7 @@ function readViewMode(): ViewMode {
   if (v === "analytics") return "analytics";
   if (v === "bucket") return "bucket";
   if (v === "course") return "course";
+  if (v === "audience") return "audience";
   return "kanban";
 }
 
@@ -341,6 +343,8 @@ export function App() {
           />
         ) : viewMode === "course" ? (
           <CourseView />
+        ) : viewMode === "audience" ? (
+          <AudienceView />
         ) : (
           <KanbanBoard
             documents={filteredDocuments}
