@@ -26,8 +26,23 @@ type Snapshot = {
   posts: Post[];
 };
 
+type WindowKey = 7 | 30 | 90 | 365;
+const WINDOW_LABELS: Record<WindowKey, string> = {
+  7: "7 days",
+  30: "30 days",
+  90: "90 days",
+  365: "1 year",
+};
+
 const fmt = (n: number | null | undefined) =>
   typeof n === "number" && Number.isFinite(n) ? n.toLocaleString("en-US") : "—";
+
+const fmtCompact = (n: number | null | undefined) => {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "—";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString("en-US");
+};
 
 const fmtDelta = (n: number) => {
   if (n === 0) return "no change";
@@ -42,6 +57,36 @@ function daysSince(isoTs: string): number {
 function formatTs(isoTs: string): string {
   const d = new Date(isoTs);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function aggregateWindow(posts: Post[], days: number) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const inWindow = posts.filter((p) => new Date(p.timestamp).getTime() >= cutoff);
+  const views = inWindow.reduce((s, p) => s + (p.views ?? 0), 0);
+  const likes = inWindow.reduce((s, p) => s + (p.likes ?? 0), 0);
+  const comments = inWindow.reduce((s, p) => s + (p.comments ?? 0), 0);
+  return {
+    posts: inWindow.length,
+    views,
+    likes,
+    comments,
+    avgViews: inWindow.length ? Math.round(views / inWindow.length) : 0,
+    avgLikes: inWindow.length ? Math.round(likes / inWindow.length) : 0,
+  };
+}
+
+function followerDeltaForWindow(snapshots: Snapshot[], days: number): number | null {
+  if (snapshots.length < 2) return null;
+  const latest = snapshots[snapshots.length - 1];
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  // Find the snapshot closest to (but not after) the cutoff
+  const eligible = snapshots
+    .slice(0, -1)
+    .filter((s) => new Date(s.capturedAt).getTime() <= Date.now())
+    .reverse();
+  const baseline = eligible.find((s) => new Date(s.capturedAt).getTime() <= cutoff);
+  if (!baseline) return null;
+  return latest.followers - baseline.followers;
 }
 
 export function AudienceView() {
@@ -64,7 +109,16 @@ export function AudienceView() {
     [snapshots]
   );
 
-  // Top posts by views (or likes if not video) across the latest snapshot
+  const windows = useMemo(() => {
+    if (!latest) return null;
+    return {
+      7: aggregateWindow(latest.posts, 7),
+      30: aggregateWindow(latest.posts, 30),
+      90: aggregateWindow(latest.posts, 90),
+      365: aggregateWindow(latest.posts, 365),
+    } as Record<WindowKey, ReturnType<typeof aggregateWindow>>;
+  }, [latest]);
+
   const topPosts = useMemo(() => {
     if (!latest) return [];
     return [...latest.posts]
@@ -85,7 +139,7 @@ export function AudienceView() {
     );
   }
 
-  if (!snapshots || !latest) {
+  if (!snapshots || !latest || !windows) {
     return <div style={{ padding: 32, color: "#666" }}>Loading audience snapshot…</div>;
   }
 
@@ -102,7 +156,7 @@ export function AudienceView() {
             style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }}
           />
         )}
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>
             @{latest.username}
           </h1>
@@ -110,7 +164,8 @@ export function AudienceView() {
             Snapshot {formatTs(latest.capturedAt)} ·{" "}
             {previous
               ? `${daysSince(previous.capturedAt)}d since previous`
-              : "first snapshot — run the script again tomorrow for trends"}
+              : "first snapshot — run daily for follower trends"}{" "}
+            · {latest.posts.length} posts captured
           </p>
         </div>
       </div>
@@ -121,7 +176,7 @@ export function AudienceView() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: 16,
-          marginBottom: 40,
+          marginBottom: 32,
         }}
       >
         <MetricCard
@@ -137,17 +192,85 @@ export function AudienceView() {
         <MetricCard label="Following" value={fmt(latest.following)} sublabel="Accounts followed" />
         <MetricCard label="Total posts" value={fmt(latest.postsTotal)} sublabel="Lifetime" />
         <MetricCard
-          label="Recent post views"
-          value={fmt(
-            latest.posts.reduce((sum, p) => sum + (p.views ?? 0), 0)
+          label="Total views captured"
+          value={fmtCompact(
+            latest.posts.reduce((s, p) => s + (p.views ?? 0), 0)
           )}
-          sublabel={`Across last ${latest.posts.length} posts`}
+          sublabel={`Across ${latest.posts.length} captured posts`}
         />
       </div>
 
-      {/* Top posts */}
+      {/* Time-window breakdown */}
       <h2 style={{ fontSize: 18, fontWeight: 600, margin: "0 0 16px" }}>
-        Top recent posts (by views, or likes if not video)
+        Engagement by window
+      </h2>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 16,
+          marginBottom: 32,
+        }}
+      >
+        {([7, 30, 90, 365] as WindowKey[]).map((w) => {
+          const agg = windows[w];
+          const followerDeltaW = followerDeltaForWindow(snapshots, w);
+          return (
+            <div
+              key={w}
+              style={{
+                background: "#fff",
+                border: "1px solid #e5e5e5",
+                borderRadius: 8,
+                padding: "16px 20px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#666",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  marginBottom: 10,
+                }}
+              >
+                Last {WINDOW_LABELS[w]}
+              </div>
+              <Row label="Posts" value={fmt(agg.posts)} />
+              <Row label="Views" value={fmtCompact(agg.views)} />
+              <Row label="Likes" value={fmtCompact(agg.likes)} />
+              <Row label="Comments" value={fmtCompact(agg.comments)} />
+              <Row
+                label="Avg views/post"
+                value={fmtCompact(agg.avgViews)}
+                muted
+              />
+              <Row
+                label="Followers Δ"
+                value={
+                  followerDeltaW === null
+                    ? "snapshot needed"
+                    : fmtDelta(followerDeltaW)
+                }
+                muted={followerDeltaW === null}
+                tone={
+                  followerDeltaW === null
+                    ? undefined
+                    : followerDeltaW > 0
+                      ? "good"
+                      : followerDeltaW < 0
+                        ? "danger"
+                        : undefined
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Top posts */}
+      <h2 style={{ fontSize: 18, fontWeight: 600, margin: "32px 0 16px" }}>
+        Top posts (by views, or likes if not video)
       </h2>
       <div
         style={{
@@ -208,14 +331,14 @@ export function AudienceView() {
               <div style={{ display: "flex", gap: 12, fontSize: 13, marginBottom: 6 }}>
                 {p.views !== null && (
                   <span style={{ color: "#000", fontWeight: 600 }}>
-                    👁 {fmt(p.views)}
+                    👁 {fmtCompact(p.views)}
                   </span>
                 )}
                 {p.likes !== null && (
-                  <span style={{ color: "#666" }}>♥ {fmt(p.likes)}</span>
+                  <span style={{ color: "#666" }}>♥ {fmtCompact(p.likes)}</span>
                 )}
                 {p.comments !== null && (
-                  <span style={{ color: "#666" }}>💬 {fmt(p.comments)}</span>
+                  <span style={{ color: "#666" }}>💬 {fmtCompact(p.comments)}</span>
                 )}
               </div>
               <div
@@ -239,9 +362,9 @@ export function AudienceView() {
       </div>
 
       <p style={{ marginTop: 32, fontSize: 12, color: "#999" }}>
-        {snapshots.length} snapshot{snapshots.length === 1 ? "" : "s"} stored. Run{" "}
-        <code>node scripts/fetch-ig-snapshot.cjs</code> daily to build a 7d/30d/90d/1yr
-        time series.
+        {snapshots.length} snapshot{snapshots.length === 1 ? "" : "s"} stored. Window
+        aggregates compute from the {latest.posts.length} most recent posts in each
+        snapshot. Run <code>node scripts/fetch-ig-snapshot.cjs</code> daily for follower-Δ trend lines.
       </p>
     </div>
   );
@@ -275,6 +398,33 @@ function MetricCard({
       {sublabel && (
         <div style={{ fontSize: 12, color: subColor, marginTop: 4 }}>{sublabel}</div>
       )}
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  muted,
+  tone,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+  tone?: "good" | "danger";
+}) {
+  const color =
+    tone === "good"
+      ? "#0a7d32"
+      : tone === "danger"
+        ? "#a01a1a"
+        : muted
+          ? "#999"
+          : "#000";
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0" }}>
+      <span style={{ color: "#666" }}>{label}</span>
+      <span style={{ color, fontWeight: muted ? 400 : 600 }}>{value}</span>
     </div>
   );
 }
